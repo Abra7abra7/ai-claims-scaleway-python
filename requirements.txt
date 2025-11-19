@@ -1,0 +1,16 @@
+fastapi
+uvicorn
+sqlalchemy
+psycopg2-binary
+pgvector
+celery
+redis
+python-multipart
+requests
+boto3
+mistralai
+presidio-analyzer
+presidio-anonymizer
+streamlit
+python-dotenv
+pydantic-settings
