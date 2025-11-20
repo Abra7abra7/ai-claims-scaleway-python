@@ -14,3 +14,6 @@ presidio-anonymizer
 streamlit
 python-dotenv
 pydantic-settings
+PyYAML==6.0.1
+reportlab==4.0.7
+pdfplumber==0.10.3

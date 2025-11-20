@@ -8,7 +8,7 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - DATABASE_URL=postgresql://postgres:postgres@db:5432/claims_db
+      - DATABASE_URL=${DATABASE_URL}
       - REDIS_URL=redis://redis:6379/0
       - MISTRAL_API_KEY=${MISTRAL_API_KEY}
       - S3_ACCESS_KEY=${S3_ACCESS_KEY}
@@ -17,8 +17,8 @@ services:
       - S3_ENDPOINT_URL=${S3_ENDPOINT_URL}
       - S3_REGION=${S3_REGION}
     depends_on:
-      - db
       - redis
+    restart: unless-stopped
     volumes:
       - ./app:/app/app
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
@@ -28,7 +28,7 @@ services:
       context: .
       dockerfile: Dockerfile.backend
     environment:
-      - DATABASE_URL=postgresql://postgres:postgres@db:5432/claims_db
+      - DATABASE_URL=${DATABASE_URL}
       - REDIS_URL=redis://redis:6379/0
       - MISTRAL_API_KEY=${MISTRAL_API_KEY}
       - S3_ACCESS_KEY=${S3_ACCESS_KEY}
@@ -37,8 +37,8 @@ services:
       - S3_ENDPOINT_URL=${S3_ENDPOINT_URL}
       - S3_REGION=${S3_REGION}
     depends_on:
-      - db
       - redis
+    restart: unless-stopped
     volumes:
       - ./app:/app/app
     command: celery -A app.worker.celery_app worker --loglevel=info
@@ -57,21 +57,21 @@ services:
       - ./frontend:/app/frontend
     command: streamlit run frontend/app.py
 
-  db:
-    image: pgvector/pgvector:pg16
-    environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=claims_db
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-
   redis:
     image: redis:7-alpine
     ports:
       - "6379:6379"
 
-volumes:
-  postgres_data:
+  presidio:
+    build:
+      context: ./presidio-api
+      dockerfile: Dockerfile
+    ports:
+      - "8001:8001"
+    environment:
+      - CONFIG_PATH=/app/config/settings.yaml
+    volumes:
+      - ./config:/app/config:ro
+    depends_on:
+      - backend
+
