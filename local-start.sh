@@ -70,3 +70,4 @@ echo "📝 View logs: docker compose logs -f"
 echo "🛑 Stop all:  docker compose down"
 echo "================================"
 
+

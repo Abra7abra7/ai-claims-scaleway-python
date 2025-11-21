@@ -196,3 +196,4 @@ git push origin main
 **Dokumentácia:** ✅ Kompletná
 **Ready for deployment:** ✅ Áno
 
+

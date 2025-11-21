@@ -332,3 +332,4 @@ Pred oznámením že deployment je hotový:
 
 **Poznámka**: Tento checklist je pre production testovanie. Pre enterprise deployment pridaj monitoring, alerting, backups a CI/CD.
 
+
