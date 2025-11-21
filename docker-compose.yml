@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   backend:
     build:
@@ -36,8 +34,10 @@ services:
       - S3_BUCKET_NAME=${S3_BUCKET_NAME}
       - S3_ENDPOINT_URL=${S3_ENDPOINT_URL}
       - S3_REGION=${S3_REGION}
+      - PRESIDIO_URL=http://presidio:8001
     depends_on:
       - redis
+      - presidio
     restart: unless-stopped
     volumes:
       - ./app:/app/app
@@ -72,6 +72,10 @@ services:
       - CONFIG_PATH=/app/config/settings.yaml
     volumes:
       - ./config:/app/config:ro
-    depends_on:
-      - backend
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
