@@ -450,6 +450,22 @@ def admin_dashboard():
                         except Exception as e:
                             st.error(f"Chyba: {e}")
             
+            # Reset Analysis Status
+            if status == 'ANALYZING' or status == 'FAILED':
+                st.warning(f"⚠️ Claim je v stave {status}. Ak analýza trvá príliš dlho, môžete ju reštartovať.")
+                
+                if st.button(f"🔄 Reset Status", key=f"reset_{claim['id']}", type="secondary"):
+                    with st.spinner("Resetujem status..."):
+                        try:
+                            response = requests.post(f"{BACKEND_URL}/claims/{claim['id']}/reset-status")
+                            if response.status_code == 200:
+                                st.success("Status resetovaný! Teraz môžete znovu spustiť analýzu.")
+                                st.rerun()
+                            else:
+                                st.error(f"Chyba: {response.text}")
+                        except Exception as e:
+                            st.error(f"Chyba: {e}")
+            
             # Documents
             st.subheader("📄 Dokumenty")
             if 'documents' in claim:

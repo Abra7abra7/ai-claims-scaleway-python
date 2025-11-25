@@ -459,6 +459,42 @@ def retry_anonymization(claim_id: int, db: Session = Depends(get_db)):
     }
 
 
+@app.post("/claims/{claim_id}/reset-status")
+def reset_claim_status(claim_id: int, db: Session = Depends(get_db)):
+    """
+    Manually reset claim status from ANALYZING/FAILED to READY_FOR_ANALYSIS.
+    Useful when analysis task gets stuck or fails.
+    """
+    from app.services.audit import AuditLogger
+    audit_logger = AuditLogger()
+    
+    claim = db.query(models.Claim).filter(models.Claim.id == claim_id).first()
+    if not claim:
+        raise HTTPException(status_code=404, detail="Claim not found")
+        
+    # Allow reset from ANALYZING, FAILED, or even ANALYZED if re-run is needed
+    if claim.status not in [models.ClaimStatus.ANALYZING.value, models.ClaimStatus.FAILED.value, models.ClaimStatus.ANALYZED.value]:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Cannot reset status from {claim.status}. Only allowed from ANALYZING, FAILED or ANALYZED."
+        )
+    
+    old_status = claim.status
+    claim.status = models.ClaimStatus.READY_FOR_ANALYSIS.value
+    db.commit()
+    
+    audit_logger.log(
+        user="admin",
+        action="STATUS_RESET",
+        entity_type="Claim",
+        entity_id=claim_id,
+        changes={"from": old_status, "to": claim.status},
+        db=db
+    )
+    
+    return {"message": f"Claim status reset from {old_status} to {claim.status}"}
+
+
 # ==================== Analysis with Prompts ====================
 
 @app.get("/prompts-config/")

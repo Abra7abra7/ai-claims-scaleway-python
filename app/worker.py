@@ -4,9 +4,8 @@ from app.core.config_loader import get_config_loader
 from app.db.session import SessionLocal
 import app.db.models as models
 from app.services.storage import StorageService
-from app.services.ocr import OCRService
+from app.services.factory import get_llm_service, get_ocr_service
 from app.services.cleaner import CleanerService
-from app.services.mistral import MistralService
 from app.services.rag import RAGService
 from app.services.report_generator import ReportGenerator
 from app.services.audit import AuditLogger
@@ -24,9 +23,9 @@ celery_app = Celery(
 
 # Service instances
 storage_service = StorageService()
-ocr_service = OCRService()
+ocr_service = get_ocr_service()      # Using Factory
 cleaner_service = CleanerService()
-mistral_service = MistralService()
+mistral_service = get_llm_service()  # Using Factory (variable name kept for compatibility)
 rag_service = RAGService()
 report_generator = ReportGenerator()
 audit_logger = AuditLogger()
@@ -172,7 +171,7 @@ def anonymize_document(document_id: int, country: str):
                 "country": country,
                 "language": "en"
             },
-            timeout=60
+            timeout=300  # Extended timeout for large documents
         )
         
         if response.status_code == 200:
@@ -218,9 +217,8 @@ def analyze_claim_with_rag(claim_id: int, prompt_id: str, user: str = "admin"):
         claim.status = models.ClaimStatus.ANALYZING.value
         db.commit()
         
-        # Get LLM config
-        llm_config = config.get_llm_config()
-        model_used = llm_config.get("analysis_model", "mistral-small-latest")
+        # Determine model used from settings
+        model_used = settings.LLM_MODEL_VERSION or f"{settings.LLM_PROVIDER}-default"
         
         # Log analysis start
         audit_logger.log_analysis_started(
@@ -246,7 +244,7 @@ def analyze_claim_with_rag(claim_id: int, prompt_id: str, user: str = "admin"):
             for doc in all_docs if doc.anonymized_text
         ])
         
-        # Analyze with Mistral
+        # Analyze with Selected Provider (mistral_service is now generic LLMProvider)
         analysis = mistral_service.analyze_claim(
             claim_text=claim_text,
             context_documents=[context_string] if context_string else [],

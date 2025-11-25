@@ -1,10 +1,11 @@
 from mistralai import Mistral
 from app.core.config import get_settings
+from app.services.interfaces import OCRProvider
 import os
 
 settings = get_settings()
 
-class OCRService:
+class OCRService(OCRProvider):
     def __init__(self):
         self.client = Mistral(api_key=settings.MISTRAL_API_KEY)
 

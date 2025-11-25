@@ -1,16 +1,18 @@
 from mistralai import Mistral
 from app.core.config import get_settings
+from app.services.interfaces import LLMProvider
+from typing import List, Dict, Any
 import json
 
 settings = get_settings()
 
-class MistralService:
+class MistralService(LLMProvider):
     def __init__(self):
         self.client = Mistral(api_key=settings.MISTRAL_API_KEY)
         self.model = "mistral-small-latest"  # Using smaller model to avoid rate limits
         self.embedding_model = "mistral-embed"
 
-    def generate_embedding(self, text: str) -> list[float]:
+    def generate_embedding(self, text: str) -> List[float]:
         """
         Generates vector embeddings for the given text.
         """
@@ -25,7 +27,7 @@ class MistralService:
             print(f"Error generating embedding: {e}")
             return []
 
-    def analyze_claim(self, claim_text: str, context_documents: list[str], custom_prompt: str = None) -> dict:
+    def analyze_claim(self, claim_text: str, context_documents: List[str], custom_prompt: str = None) -> Dict[str, Any]:
         """
         Analyzes the claim against the provided context documents.
         """

@@ -3,8 +3,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import text
 import app.db.models as models
 from app.services.storage import StorageService
-from app.services.ocr import OCRService
-from app.services.mistral import MistralService
+from app.services.factory import get_ocr_service, get_llm_service
 from app.core.config_loader import get_config_loader
 import os
 
@@ -17,8 +16,8 @@ class RAGService:
     
     def __init__(self):
         self.storage_service = StorageService()
-        self.ocr_service = OCRService()
-        self.mistral_service = MistralService()
+        self.ocr_service = get_ocr_service()
+        self.mistral_service = get_llm_service() # Keeps variable name for compatibility but uses factory
         self.config = get_config_loader()
     
     def upload_document(
@@ -355,4 +354,3 @@ class RAGService:
                 structure[country].append(doc_type)
         
         return structure
-
