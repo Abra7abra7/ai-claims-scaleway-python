@@ -42,7 +42,7 @@ api_router.include_router(
 # Anonymization Review - nested under claims
 api_router.include_router(
     anonymization.router,
-    prefix="/claims/{claim_id}/anon",
+    prefix="/claims/{claim_id}/anonymization",
     tags=["Anonymization"]
 )
 
