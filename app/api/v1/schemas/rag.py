@@ -29,12 +29,16 @@ class RAGDocumentBase(BaseSchema):
     filename: str
     country: str
     document_type: str
+    # Alias for frontend compatibility
+    category: Optional[str] = None  
 
 
 class RAGDocumentSummary(RAGDocumentBase):
     """Summary for list endpoints."""
     uploaded_by: Optional[str] = None
     created_at: Optional[datetime] = None
+    is_processed: bool = False
+    chunk_count: int = 0
 
 
 class RAGDocumentDetail(RAGDocumentBase):

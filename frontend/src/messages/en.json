@@ -137,6 +137,7 @@
     "deleteConfirm": "Are you sure you want to delete this document?",
     "uploadSuccess": "Document uploaded successfully",
     "categories": {
+      "general": "General",
       "policy": "Policy Documents",
       "procedure": "Procedures",
       "guideline": "Guidelines",

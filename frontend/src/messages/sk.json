@@ -137,6 +137,7 @@
     "deleteConfirm": "Naozaj chcete vymazať tento dokument?",
     "uploadSuccess": "Dokument bol úspešne nahratý",
     "categories": {
+      "general": "Všeobecné",
       "policy": "Poistné zmluvy",
       "procedure": "Procedúry",
       "guideline": "Smernice",

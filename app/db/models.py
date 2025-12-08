@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, Enum
+from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, Enum, Boolean
 from sqlalchemy.orm import relationship, declarative_base
 from sqlalchemy.dialects.postgresql import JSONB
 from pgvector.sqlalchemy import Vector
@@ -44,7 +44,7 @@ class ClaimDocument(Base):
     original_text = Column(Text, nullable=True)  # OCR output
     cleaned_text = Column(Text, nullable=True)  # After cleaning
     anonymized_text = Column(Text, nullable=True)  # After anonymization
-    embedding = Column(Vector(1024), nullable=True)
+    embedding = Column(Vector(1024), nullable=True)  # mistral-embed returns 1024 dims
     
     # HITL review tracking
     ocr_reviewed_by = Column(String, nullable=True)
@@ -64,9 +64,11 @@ class RAGDocument(Base):
     country = Column(String, nullable=False)  # SK, IT, DE
     document_type = Column(String, nullable=False)  # vseobecne-podmienky, zdravotne, etc.
     text_content = Column(Text, nullable=True)
-    embedding = Column(Vector(1024), nullable=True)
+    embedding = Column(Vector(1024), nullable=True)  # mistral-embed returns 1024 dims
     uploaded_by = Column(String, nullable=True)  # admin username
     created_at = Column(DateTime, default=datetime.utcnow)
+    is_processed = Column(Boolean, default=False)  # True after OCR/embedding complete
+    chunk_count = Column(Integer, default=0)  # Number of text chunks
 
 
 class AuditLog(Base):

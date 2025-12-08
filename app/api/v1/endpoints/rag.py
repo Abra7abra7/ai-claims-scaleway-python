@@ -56,8 +56,12 @@ def list_rag_documents(
             filename=doc.filename,
             country=doc.country,
             document_type=doc.document_type,
+            category=doc.document_type,  # Alias for frontend
             uploaded_by=doc.uploaded_by,
-            created_at=doc.created_at
+            created_at=doc.created_at,
+            # Check if column exists, otherwise derive from text_content
+            is_processed=getattr(doc, 'is_processed', None) if getattr(doc, 'is_processed', None) is not None else bool(doc.text_content),
+            chunk_count=getattr(doc, 'chunk_count', 0) or 0
         )
         for doc in docs
     ]

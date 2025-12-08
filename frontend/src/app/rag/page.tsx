@@ -65,7 +65,7 @@ import { cn } from '@/lib/utils'
 import { useRAGDocuments, useUploadRAGDocument, useDeleteRAGDocument } from '@/hooks/use-rag'
 import { format } from 'date-fns'
 
-const categories = ['policy', 'procedure', 'guideline', 'template'] as const
+const categories = ['general', 'policy', 'procedure', 'guideline', 'template'] as const
 const countries = ['SK', 'IT', 'DE'] as const
 
 export default function RAGPage() {
@@ -331,7 +331,7 @@ export default function RAGPage() {
                     <TableCell>
                       <Badge variant="secondary">
                         <FolderOpen className="mr-1 h-3 w-3" />
-                        {t(`categories.${doc.category as 'policy' | 'procedure' | 'guideline' | 'template'}`)}
+                        {t(`categories.${doc.category as 'general' | 'policy' | 'procedure' | 'guideline' | 'template'}`)}
                       </Badge>
                     </TableCell>
                     <TableCell>
