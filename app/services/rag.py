@@ -86,11 +86,11 @@ class RAGService:
             if not rag_doc:
                 return False
             
-            # Generate presigned URL
-            presigned_url = self.storage_service.generate_presigned_url(rag_doc.s3_key)
+            # Download file from S3/MinIO and process as base64
+            file_bytes = self.storage_service.download_file_bytes(rag_doc.s3_key)
             
-            # Extract text using OCR
-            text_content = self.ocr_service.extract_text_from_url(presigned_url)
+            # Extract text using OCR with base64
+            text_content = self.ocr_service.extract_text_from_bytes(file_bytes, rag_doc.filename)
             rag_doc.text_content = text_content
             
             # Generate embedding
