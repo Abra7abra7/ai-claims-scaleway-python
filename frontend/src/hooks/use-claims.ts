@@ -1,7 +1,7 @@
 "use client"
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { claimsApi, ocrApi, anonApi, analysisApi, type ClaimStatus } from '@/lib/api-client'
+import { claimsApi, ocrApi, anonApi, analysisApi, promptsApi, type ClaimStatus } from '@/lib/api-client'
 import { toast } from 'sonner'
 
 export function useClaims(params?: { skip?: number; limit?: number; status?: string }) {
@@ -194,20 +194,43 @@ export function useRetryAnon() {
   })
 }
 
+// Prompts Hooks
+export function usePrompts() {
+  return useQuery({
+    queryKey: ['prompts'],
+    queryFn: () => promptsApi.list(),
+  })
+}
+
+export function usePromptsConfig() {
+  return useQuery({
+    queryKey: ['prompts-config'],
+    queryFn: () => promptsApi.getConfig(),
+  })
+}
+
+export function usePrompt(promptId: string) {
+  return useQuery({
+    queryKey: ['prompt', promptId],
+    queryFn: () => promptsApi.get(promptId),
+    enabled: !!promptId,
+  })
+}
+
 // Analysis Hooks
-export function useRunAnalysis() {
+export function useStartAnalysis() {
   const queryClient = useQueryClient()
   
   return useMutation({
-    mutationFn: ({ claimId, provider }: { claimId: number; provider?: string }) =>
-      analysisApi.run(claimId, provider),
+    mutationFn: ({ claimId, promptId }: { claimId: number; promptId: string }) =>
+      analysisApi.start(claimId, promptId),
     onSuccess: (_, { claimId }) => {
       queryClient.invalidateQueries({ queryKey: ['claim', claimId] })
       queryClient.invalidateQueries({ queryKey: ['claims'] })
       toast.success('Analysis started')
     },
     onError: (error) => {
-      toast.error(`Failed to run analysis: ${error.message}`)
+      toast.error(`Failed to start analysis: ${error.message}`)
     },
   })
 }

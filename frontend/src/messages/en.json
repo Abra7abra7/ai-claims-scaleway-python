@@ -110,13 +110,20 @@
     "title": "AI Analysis",
     "subtitle": "AI-powered claim analysis",
     "runAnalysis": "Run Analysis",
+    "startAnalysis": "Start Analysis",
+    "selectPrompt": "Select Analysis Prompt",
+    "selectPromptDescription": "Choose a prompt template for analyzing this claim. Different prompts are optimized for different types of analysis.",
     "analyzing": "Analyzing claim...",
     "result": "Analysis Result",
     "model": "Model Used",
     "confidence": "Confidence",
     "recommendation": "Recommendation",
     "summary": "Summary",
-    "details": "Details"
+    "details": "Details",
+    "promptName": "Prompt Name",
+    "promptDescription": "Description",
+    "llmModel": "LLM Model",
+    "default": "Default"
   },
   "rag": {
     "title": "RAG Documents",

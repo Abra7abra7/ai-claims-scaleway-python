@@ -117,14 +117,18 @@ Vráť IBA JSON."""
 
 def get_prompt_list():
     """Returns list of available prompts with metadata"""
-    return [
-        {
-            "id": key,
-            "name": value["name"],
-            "description": value["description"]
-        }
-        for key, value in PROMPTS.items()
-    ]
+    return {
+        "prompts": [
+            {
+                "id": key,
+                "name": value["name"],
+                "description": value.get("description", ""),
+                "model": value.get("model", "mistral-small-latest")
+            }
+            for key, value in PROMPTS.items()
+        ],
+        "default": "default"
+    }
 
 def get_prompt_template(prompt_id: str) -> str:
     """Returns the template for a specific prompt ID"""

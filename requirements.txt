@@ -18,4 +18,4 @@ email-validator
 PyYAML==6.0.1
 reportlab==4.0.7
 pdfplumber==0.10.3
-google-generativeai
+google-genai>=1.0.0

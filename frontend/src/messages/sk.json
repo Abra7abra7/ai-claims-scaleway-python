@@ -110,13 +110,20 @@
     "title": "AI Analýza",
     "subtitle": "Analýza poistnej udalosti pomocou AI",
     "runAnalysis": "Spustiť analýzu",
+    "startAnalysis": "Spustiť analýzu",
+    "selectPrompt": "Výber promptu pre analýzu",
+    "selectPromptDescription": "Vyberte šablónu promptu pre analýzu tejto poistnej udalosti. Rôzne prompty sú optimalizované pre rôzne typy analýz.",
     "analyzing": "Analyzujem...",
     "result": "Výsledok analýzy",
     "model": "Použitý model",
     "confidence": "Dôveryhodnosť",
     "recommendation": "Odporúčanie",
     "summary": "Zhrnutie",
-    "details": "Detaily"
+    "details": "Detaily",
+    "promptName": "Názov promptu",
+    "promptDescription": "Popis",
+    "llmModel": "LLM Model",
+    "default": "Predvolený"
   },
   "rag": {
     "title": "RAG Dokumenty",

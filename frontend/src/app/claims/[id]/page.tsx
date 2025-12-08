@@ -20,7 +20,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Separator } from '@/components/ui/separator'
 import { StatusBadge } from '@/components/claims/status-badge'
-import { useClaim, useDeleteClaim, useRunAnalysis } from '@/hooks/use-claims'
+import { AnalysisDialog } from '@/components/claims/analysis-dialog'
+import { useClaim, useDeleteClaim } from '@/hooks/use-claims'
 import { format } from 'date-fns'
 import {
   AlertDialog,
@@ -101,17 +102,16 @@ export default function ClaimDetailPage({ params }: { params: Promise<{ id: stri
   const tCountries = useTranslations('countries')
   const tAnalysis = useTranslations('analysis')
 
-  const { data: claim, isLoading } = useClaim(claimId)
+  const { data: claim, isLoading, refetch } = useClaim(claimId)
   const deleteMutation = useDeleteClaim()
-  const analysisMutation = useRunAnalysis()
 
   const handleDelete = async () => {
     await deleteMutation.mutateAsync(claimId)
     router.push('/claims')
   }
 
-  const handleRunAnalysis = async () => {
-    await analysisMutation.mutateAsync({ claimId })
+  const handleAnalysisSuccess = () => {
+    refetch()
   }
 
   if (isLoading) {
@@ -156,10 +156,10 @@ export default function ClaimDetailPage({ params }: { params: Promise<{ id: stri
         </div>
         <div className="flex items-center gap-2">
           {claim.status === 'READY_FOR_ANALYSIS' && (
-            <Button onClick={handleRunAnalysis} disabled={analysisMutation.isPending}>
-              <Zap className="mr-2 h-4 w-4" />
-              {tAnalysis('runAnalysis')}
-            </Button>
+            <AnalysisDialog 
+              claimId={claimId} 
+              onSuccess={handleAnalysisSuccess}
+            />
           )}
           <AlertDialog>
             <AlertDialogTrigger asChild>
