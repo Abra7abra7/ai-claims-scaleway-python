@@ -120,6 +120,22 @@ export function usePreviewCleaning() {
   })
 }
 
+export function useRerunOcr() {
+  const queryClient = useQueryClient()
+  
+  return useMutation({
+    mutationFn: (claimId: number) => ocrApi.rerun(claimId),
+    onSuccess: (_, claimId) => {
+      queryClient.invalidateQueries({ queryKey: ['ocr-review', claimId] })
+      queryClient.invalidateQueries({ queryKey: ['claim', claimId] })
+      toast.success('OCR re-run started')
+    },
+    onError: (error) => {
+      toast.error(`Failed to rerun OCR: ${error.message}`)
+    },
+  })
+}
+
 // Anonymization Hooks
 export function useAnonReview(claimId: number) {
   return useQuery({
@@ -242,4 +258,3 @@ export function useAnalysisResult(claimId: number) {
     enabled: !!claimId,
   })
 }
-

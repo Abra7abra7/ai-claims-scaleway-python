@@ -222,7 +222,7 @@ export default function ClaimDetailPage({ params }: { params: Promise<{ id: stri
               </Link>
             </TabsTrigger>
           )}
-          {claim.analysis_result && (
+          {claim.analysis_result !== null && claim.analysis_result !== undefined && (
             <TabsTrigger value="analysis">
               <Zap className="mr-2 h-4 w-4" />
               {tAnalysis('result')}
@@ -278,7 +278,7 @@ export default function ClaimDetailPage({ params }: { params: Promise<{ id: stri
           </Card>
         </TabsContent>
 
-        {claim.analysis_result && (
+        {claim.analysis_result !== null && claim.analysis_result !== undefined && (
           <TabsContent value="analysis">
             <Card>
               <CardHeader>
@@ -291,7 +291,7 @@ export default function ClaimDetailPage({ params }: { params: Promise<{ id: stri
               </CardHeader>
               <CardContent>
                 <pre className="bg-muted p-4 rounded-lg overflow-auto text-sm">
-                  {JSON.stringify(claim.analysis_result, null, 2)}
+                  {JSON.stringify(claim.analysis_result as Record<string, unknown>, null, 2)}
                 </pre>
               </CardContent>
             </Card>

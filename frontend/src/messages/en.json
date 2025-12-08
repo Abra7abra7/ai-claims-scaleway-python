@@ -201,7 +201,9 @@
     "READY_FOR_ANALYSIS": "Ready for Analysis",
     "ANALYZING": "Analyzing",
     "ANALYZED": "Analyzed",
-    "FAILED": "Failed"
+    "FAILED": "Failed",
+    "WAITING_FOR_APPROVAL": "Waiting for Approval",
+    "APPROVED": "Approved"
   },
   "countries": {
     "SK": "Slovakia",

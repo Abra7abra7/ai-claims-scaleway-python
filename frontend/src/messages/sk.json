@@ -201,7 +201,9 @@
     "READY_FOR_ANALYSIS": "Pripravené na analýzu",
     "ANALYZING": "Analyzuje sa",
     "ANALYZED": "Analyzované",
-    "FAILED": "Zlyhané"
+    "FAILED": "Zlyhané",
+    "WAITING_FOR_APPROVAL": "Čaká na schválenie",
+    "APPROVED": "Schválené"
   },
   "countries": {
     "SK": "Slovensko",

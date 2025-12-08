@@ -52,4 +52,3 @@ export function StatusBadge({ status, showIcon = true, className }: StatusBadgeP
     </Badge>
   )
 }
-

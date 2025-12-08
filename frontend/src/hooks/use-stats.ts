@@ -17,4 +17,3 @@ export function useClaimStats(days?: number) {
     queryFn: () => statsApi.claims(days),
   })
 }
-
