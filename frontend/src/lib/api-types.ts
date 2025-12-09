@@ -571,6 +571,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/claims/{claim_id}/ocr/edit-cleaned": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Edit cleaned text
+         * @description Edit cleaned text for one or more documents
+         */
+        post: operations["edit_cleaned_text_api_v1_claims__claim_id__ocr_edit_cleaned_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/claims/{claim_id}/ocr/approve": {
         parameters: {
             query?: never;
@@ -1382,6 +1402,23 @@ export interface components {
             message: string;
             /** Document Count */
             document_count: number;
+        };
+        /**
+         * CleanedEditRequest
+         * @description Request to edit cleaned text. Keys are document IDs as strings.
+         */
+        CleanedEditRequest: {
+            /**
+             * Edits
+             * @description Map of document_id (as string) to new cleaned text
+             * @example {
+             *       "1": "Edited cleaned text",
+             *       "2": "Another edited text"
+             *     }
+             */
+            edits: {
+                [key: string]: string;
+            };
         };
         /**
          * CleaningPreviewDocument
@@ -2878,6 +2915,44 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["OCREditRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["app__api__v1__schemas__base__MessageResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    edit_cleaned_text_api_v1_claims__claim_id__ocr_edit_cleaned_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-User-Id"?: string | null;
+                "X-User-Email"?: string | null;
+            };
+            path: {
+                claim_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CleanedEditRequest"];
             };
         };
         responses: {

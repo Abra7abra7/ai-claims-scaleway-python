@@ -108,7 +108,7 @@ export function DocumentPreview({
         {/* Horizontal Layout: Sidebar + Content */}
         <div className="flex-1 flex overflow-hidden">
           {/* Tabs Sidebar - Left */}
-          <div className="w-56 border-r border-zinc-800 bg-zinc-900/50 p-4 flex flex-col gap-2">
+          <div className="w-44 border-r border-zinc-800 bg-zinc-900/50 p-3 flex flex-col gap-2">
             {availableTabs.map((tab) => {
               const Icon = tab.icon;
               return (
@@ -130,7 +130,7 @@ export function DocumentPreview({
           </div>
 
           {/* Content Area - Right */}
-          <div className="flex-1 overflow-hidden p-6">
+          <div className="flex-1 overflow-hidden p-4">
             {activeTabData?.value === "original" && activeTabData.content ? (
               <div className="h-full w-full rounded-lg border border-zinc-700 overflow-hidden bg-zinc-950">
                 <iframe

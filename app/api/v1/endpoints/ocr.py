@@ -14,6 +14,7 @@ from app.api.v1.schemas.documents import (
     OCRReviewResponse,
     OCRReviewDocument,
     OCREditRequest,
+    CleanedEditRequest,
     CleaningPreviewResponse,
     CleaningPreviewDocument,
     CleaningStats,
@@ -115,6 +116,58 @@ def edit_ocr(
     
     db.commit()
     return MessageResponse(message="OCR text updated")
+
+
+@router.post(
+    "/edit-cleaned",
+    response_model=MessageResponse,
+    summary="Edit cleaned text",
+    description="Edit cleaned text for one or more documents"
+)
+def edit_cleaned_text(
+    claim_id: int,
+    request: CleanedEditRequest,
+    db: Session = Depends(get_database),
+    audit: AuditLogger = Depends(get_audit_logger),
+    current_user: CurrentUser = Depends(get_current_user)
+):
+    """
+    Edit cleaned text for documents.
+    """
+    claim = db.query(models.Claim).filter(models.Claim.id == claim_id).first()
+    if not claim:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Claim not found"
+        )
+    
+    for doc_id_str, new_text in request.edits.items():
+        doc_id = int(doc_id_str)
+        document = db.query(models.ClaimDocument).filter(
+            models.ClaimDocument.id == doc_id,
+            models.ClaimDocument.claim_id == claim_id
+        ).first()
+        
+        if document:
+            old_text = document.cleaned_text
+            document.cleaned_text = new_text
+            
+            # Log edit
+            audit.log(
+                user=current_user.id,
+                action="CLEANED_TEXT_EDITED",
+                entity_type="ClaimDocument",
+                entity_id=doc_id,
+                db=db,
+                details={
+                    "claim_id": claim_id,
+                    "old_length": len(old_text or ""),
+                    "new_length": len(new_text)
+                }
+            )
+    
+    db.commit()
+    return MessageResponse(message="Cleaned text updated")
 
 
 @router.post(

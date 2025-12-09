@@ -78,7 +78,7 @@ export function ClaimDetail({ claimId }: ClaimDetailProps) {
   const [previewDocument, setPreviewDocument] = useState<any | null>(null);
   const [downloadingReport, setDownloadingReport] = useState<number | null>(null);
 
-  // Fetch claim data
+  // Fetch claim data with automatic polling for processing states
   const { data: claim, isLoading, error } = useQuery({
     queryKey: ["claim", claimId],
     queryFn: async () => {
@@ -88,10 +88,12 @@ export function ClaimDetail({ claimId }: ClaimDetailProps) {
       if (error) throw error;
       return data;
     },
+    refetchInterval: (data) => {
+      // Poll every 3 seconds if claim is being processed
+      const processingStatuses = ["PROCESSING", "CLEANING", "ANONYMIZING", "ANALYZING"];
+      return data && processingStatuses.includes(data.status) ? 3000 : false;
+    },
   });
-
-  // Use polling hook for real-time updates (uses same query key)
-  const { isPolling } = useClaimPolling({ claimId });
 
   // Fetch reports
   const { data: reportsData } = useQuery({
@@ -200,7 +202,7 @@ export function ClaimDetail({ claimId }: ClaimDetailProps) {
               <Badge variant="outline" className={statusColors[claim.status] || ""}>
                 {t(`statuses.${claim.status}` as any) || claim.status}
               </Badge>
-              {isPolling && (
+              {["PROCESSING", "CLEANING", "ANONYMIZING", "ANALYZING"].includes(claim.status) && (
                 <>
                   <Separator orientation="vertical" className="h-4 bg-zinc-700" />
                   <div className="flex items-center gap-1 text-xs text-blue-400">

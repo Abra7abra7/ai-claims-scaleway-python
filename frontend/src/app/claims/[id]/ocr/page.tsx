@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { ArrowLeft, Save, Check, Eye, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { ArrowLeft, Save, Check, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -30,13 +30,20 @@ export default function OCRReviewPage() {
   const [data, setData] = useState<OCRReviewResponse | null>(null);
   const [currentDocIndex, setCurrentDocIndex] = useState(0);
   const [editedTexts, setEditedTexts] = useState<Record<number, string>>({});
-  const [cleaningPreview, setCleaningPreview] = useState<CleaningPreviewDocument[] | null>(null);
-  const [showPreview, setShowPreview] = useState(false);
+  const [cleaningPreview, setCleaningPreview] = useState<CleaningPreviewDocument | null>(null);
+  const [loadingPreview, setLoadingPreview] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchOCRData();
   }, [claimId]);
+
+  // Auto-fetch cleaning preview when document or text changes
+  useEffect(() => {
+    if (data && currentDocIndex >= 0) {
+      fetchCleaningPreviewForCurrentDoc();
+    }
+  }, [currentDocIndex, data]);
 
   const fetchOCRData = async () => {
     try {
@@ -50,7 +57,7 @@ export default function OCRReviewPage() {
         throw new Error(err.detail || "Failed to load OCR data");
       }
 
-      const result: OCRReviewData = await response.json();
+      const result: OCRReviewResponse = await response.json();
       setData(result);
 
       // Initialize edited texts
@@ -67,11 +74,68 @@ export default function OCRReviewPage() {
     }
   };
 
+  const fetchCleaningPreviewForCurrentDoc = async () => {
+    if (!data) return;
+    
+    try {
+      setLoadingPreview(true);
+      const response = await fetch(`${API_URL}/api/v1/claims/${claimId}/ocr/preview-cleaning`, {
+        method: "POST",
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to preview cleaning");
+      }
+
+      const result = await response.json();
+      // Find the preview for current document
+      const currentPreview = result.documents.find(
+        (doc: CleaningPreviewDocument) => doc.id === data.documents[currentDocIndex].id
+      );
+      setCleaningPreview(currentPreview || null);
+    } catch (err: any) {
+      console.error("Preview error:", err);
+      setCleaningPreview(null);
+    } finally {
+      setLoadingPreview(false);
+    }
+  };
+
   const handleTextChange = (docId: number, text: string) => {
     setEditedTexts((prev) => ({ ...prev, [docId]: text }));
   };
 
-  const saveChanges = async () => {
+  const saveCurrentDocument = async () => {
+    if (!data) return;
+    
+    try {
+      setSaving(true);
+      const currentDoc = data.documents[currentDocIndex];
+      const response = await fetch(`${API_URL}/api/v1/claims/${claimId}/ocr/edit`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          edits: { [currentDoc.id]: editedTexts[currentDoc.id] || "" }
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to save document");
+      }
+
+      toast.success(`Saved: ${currentDoc.filename}`);
+      // Refresh preview after save
+      fetchCleaningPreviewForCurrentDoc();
+    } catch (err: any) {
+      toast.error(err.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const saveAllDocuments = async () => {
     try {
       setSaving(true);
       const response = await fetch(`${API_URL}/api/v1/claims/${claimId}/ocr/edit`, {
@@ -85,31 +149,13 @@ export default function OCRReviewPage() {
         throw new Error("Failed to save changes");
       }
 
-      toast.success("Changes saved");
+      toast.success("All documents saved");
+      // Refresh preview after save
+      fetchCleaningPreviewForCurrentDoc();
     } catch (err: any) {
       toast.error(err.message);
     } finally {
       setSaving(false);
-    }
-  };
-
-  const previewCleaning = async () => {
-    try {
-      setShowPreview(true);
-      const response = await fetch(`${API_URL}/api/v1/claims/${claimId}/ocr/preview-cleaning`, {
-        method: "POST",
-        credentials: "include",
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to preview cleaning");
-      }
-
-      const result = await response.json();
-      setCleaningPreview(result.documents);
-    } catch (err: any) {
-      toast.error(err.message);
-      setShowPreview(false);
     }
   };
 
@@ -118,7 +164,7 @@ export default function OCRReviewPage() {
       setApproving(true);
       
       // First save any changes
-      await saveChanges();
+      await saveAllDocuments();
 
       // Then approve
       const response = await fetch(`${API_URL}/api/v1/claims/${claimId}/ocr/approve`, {
@@ -193,11 +239,15 @@ export default function OCRReviewPage() {
 
       {/* Document Navigation */}
       <Card className="border-zinc-800 bg-zinc-900">
-        <CardHeader className="pb-3">
+        <CardContent className="pt-6">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-lg">
-              Document {currentDocIndex + 1} of {totalDocs}
-            </CardTitle>
+            <div>
+              <p className="text-sm text-zinc-500">Document</p>
+              <p className="text-lg font-semibold text-white">
+                {currentDocIndex + 1} of {totalDocs}
+              </p>
+              <p className="text-sm text-zinc-400">{currentDoc.filename}</p>
+            </div>
             <div className="flex items-center gap-2">
               <Button
                 variant="outline"
@@ -217,62 +267,85 @@ export default function OCRReviewPage() {
               </Button>
             </div>
           </div>
-          <CardDescription>{currentDoc.filename}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Textarea
-            value={editedTexts[currentDoc.id] || ""}
-            onChange={(e) => handleTextChange(currentDoc.id, e.target.value)}
-            className="min-h-[400px] font-mono text-sm bg-zinc-950 border-zinc-700"
-            placeholder="No OCR text extracted..."
-          />
         </CardContent>
       </Card>
 
-      {/* Cleaning Preview */}
-      {showPreview && cleaningPreview && (
+      {/* Horizontal Layout: OCR Text (left) + Cleaning Preview (right) */}
+      <div className="grid grid-cols-2 gap-6">
+        {/* Left: OCR Text (Editable) */}
         <Card className="border-zinc-800 bg-zinc-900">
           <CardHeader>
-            <CardTitle className="text-lg">Cleaning Preview</CardTitle>
-            <CardDescription>
-              Preview how text will look after cleaning rules are applied
-            </CardDescription>
+            <CardTitle className="text-lg text-white">OCR Text (Original)</CardTitle>
+            <CardDescription>Edit the extracted text if needed</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            {cleaningPreview.map((doc) => (
-              <div key={doc.id} className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="font-medium">{doc.filename}</span>
-                  <Badge variant="secondary">
-                    -{doc.stats.reduction_percent}% ({doc.stats.characters_removed} chars)
-                  </Badge>
-                </div>
-                <Textarea
-                  value={doc.cleaned_text}
-                  readOnly
-                  className="min-h-[200px] font-mono text-sm bg-zinc-950 border-zinc-700"
-                />
-              </div>
-            ))}
+          <CardContent>
+            <Textarea
+              value={editedTexts[currentDoc.id] || ""}
+              onChange={(e) => handleTextChange(currentDoc.id, e.target.value)}
+              className="min-h-[600px] font-mono text-sm bg-zinc-950 border-zinc-700 text-white"
+              placeholder="No OCR text extracted..."
+            />
           </CardContent>
         </Card>
-      )}
+
+        {/* Right: Cleaning Preview (Read-only) */}
+        <Card className="border-zinc-800 bg-zinc-900">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-lg text-white">Cleaning Preview</CardTitle>
+                <CardDescription>Preview after cleaning rules applied</CardDescription>
+              </div>
+              {cleaningPreview && (
+                <Badge variant="secondary">
+                  -{cleaningPreview.stats.reduction_percent}% 
+                  ({cleaningPreview.stats.characters_removed} chars removed)
+                </Badge>
+              )}
+            </div>
+          </CardHeader>
+          <CardContent>
+            {loadingPreview ? (
+              <div className="flex items-center justify-center min-h-[600px]">
+                <Loader2 className="h-8 w-8 animate-spin text-emerald-500" />
+              </div>
+            ) : cleaningPreview ? (
+              <Textarea
+                value={cleaningPreview.cleaned_text}
+                readOnly
+                className="min-h-[600px] font-mono text-sm bg-zinc-950 border-zinc-700 text-zinc-300"
+              />
+            ) : (
+              <div className="flex items-center justify-center min-h-[600px] text-zinc-500">
+                <p>No preview available</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Actions */}
       <div className="flex items-center justify-between pt-4 border-t border-zinc-800">
-        <Button variant="outline" onClick={previewCleaning} disabled={showPreview}>
-          <Eye className="mr-2 h-4 w-4" />
-          Preview Cleaning
-        </Button>
-
+        <div className="text-sm text-zinc-500">
+          Document {currentDocIndex + 1} of {totalDocs}
+        </div>
         <div className="flex items-center gap-3">
-          <Button variant="outline" onClick={saveChanges} disabled={saving}>
+          <Button variant="outline" onClick={saveCurrentDocument} disabled={saving}>
             {saving ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             ) : (
               <Save className="mr-2 h-4 w-4" />
             )}
-            Save Changes
+            Save Current
+          </Button>
+
+          <Button variant="outline" onClick={saveAllDocuments} disabled={saving}>
+            {saving ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <Save className="mr-2 h-4 w-4" />
+            )}
+            Save All
           </Button>
 
           <Button
@@ -285,11 +358,10 @@ export default function OCRReviewPage() {
             ) : (
               <Check className="mr-2 h-4 w-4" />
             )}
-            Approve & Start Cleaning
+            Approve & Continue
           </Button>
         </div>
       </div>
     </div>
   );
 }
-

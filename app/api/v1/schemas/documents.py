@@ -106,6 +106,15 @@ class CleaningTextResponse(BaseModel):
     stats: CleaningStats
 
 
+class CleanedEditRequest(BaseModel):
+    """Request to edit cleaned text. Keys are document IDs as strings."""
+    edits: dict[str, str] = Field(
+        ...,
+        description="Map of document_id (as string) to new cleaned text",
+        examples=[{"1": "Edited cleaned text", "2": "Another edited text"}]
+    )
+
+
 # ==================== Anonymization Review Schemas ====================
 
 class AnonReviewDocument(BaseModel):

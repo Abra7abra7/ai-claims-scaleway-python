@@ -41,7 +41,7 @@ export default function ReportsPage() {
       const token = localStorage.getItem("auth_token");
 
       // First get all analyzed claims
-      const claimsRes = await fetch(`${API_URL}/api/v1/claims?status=analyzed&limit=100`, {
+      const claimsRes = await fetch(`${API_URL}/api/v1/claims?status=ANALYZED&limit=100`, {
         credentials: "include",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -93,23 +93,9 @@ export default function ReportsPage() {
   const downloadReport = async (reportId: number) => {
     try {
       setDownloading(reportId);
-      const token = localStorage.getItem("auth_token");
-
-      const response = await fetch(`${API_URL}/api/v1/reports/${reportId}/download`, {
-        credentials: "include",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to get download URL");
-      }
-
-      const data = await response.json();
-      
-      // Open download URL in new tab
-      window.open(data.download_url, "_blank");
+      // Direct download from backend proxy
+      window.open(`${API_URL}/api/v1/reports/${reportId}/download`, "_blank");
+      toast.success("Report download started");
     } catch (err: any) {
       toast.error(err.message);
     } finally {
