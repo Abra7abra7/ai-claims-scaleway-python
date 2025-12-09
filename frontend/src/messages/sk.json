@@ -1,0 +1,122 @@
+{
+  "common": {
+    "loading": "Načítavam...",
+    "error": "Chyba",
+    "success": "Úspech",
+    "save": "Uložiť",
+    "cancel": "Zrušiť",
+    "delete": "Vymazať",
+    "edit": "Upraviť",
+    "create": "Vytvoriť",
+    "search": "Hľadať",
+    "filter": "Filter",
+    "noData": "Žiadne dáta",
+    "confirm": "Potvrdiť",
+    "back": "Späť",
+    "next": "Ďalej",
+    "previous": "Predchádzajúce"
+  },
+  "navigation": {
+    "dashboard": "Dashboard",
+    "claims": "Poistné udalosti",
+    "rag": "Dokumentácia",
+    "reports": "Reporty",
+    "audit": "Audit log",
+    "settings": "Nastavenia"
+  },
+  "auth": {
+    "signIn": "Prihlásiť sa",
+    "signUp": "Registrovať sa",
+    "signOut": "Odhlásiť sa",
+    "email": "E-mail",
+    "password": "Heslo",
+    "confirmPassword": "Potvrďte heslo",
+    "forgotPassword": "Zabudnuté heslo?",
+    "orContinueWith": "alebo pokračujte cez",
+    "google": "Google",
+    "noAccount": "Nemáte účet?",
+    "haveAccount": "Už máte účet?",
+    "createAccount": "Vytvoriť účet",
+    "welcomeBack": "Vitajte späť",
+    "signInDescription": "Prihláste sa do svojho účtu"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "welcome": "Vitajte späť",
+    "totalClaims": "Celkový počet poistných udalostí",
+    "pendingReview": "Čakajú na kontrolu",
+    "completed": "Dokončené",
+    "failed": "Zlyhané",
+    "recentActivity": "Nedávna aktivita",
+    "quickStats": "Rýchle štatistiky",
+    "byStatus": "Podľa stavu",
+    "byCountry": "Podľa krajiny"
+  },
+  "claims": {
+    "title": "Poistné udalosti",
+    "newClaim": "Nová poistná udalosť",
+    "uploadDocuments": "Nahrať dokumenty",
+    "selectCountry": "Vyberte krajinu",
+    "status": "Stav",
+    "country": "Krajina",
+    "createdAt": "Vytvorené",
+    "documents": "Dokumenty",
+    "analysis": "Analýza",
+    "actions": "Akcie",
+    "viewDetails": "Zobraziť detaily",
+    "startAnalysis": "Spustiť analýzu",
+    "approve": "Schváliť",
+    "reject": "Zamietnuť",
+    "ocrReview": "OCR kontrola",
+    "anonymizationReview": "Kontrola anonymizácie",
+    "statuses": {
+      "PROCESSING": "Spracováva sa",
+      "OCR_REVIEW": "OCR kontrola",
+      "CLEANING": "Čistenie",
+      "ANONYMIZING": "Anonymizácia",
+      "ANONYMIZATION_REVIEW": "Kontrola anonymizácie",
+      "READY_FOR_ANALYSIS": "Pripravené na analýzu",
+      "ANALYZING": "Analyzuje sa",
+      "ANALYZED": "Analyzované",
+      "FAILED": "Zlyhané"
+    }
+  },
+  "rag": {
+    "title": "RAG Dokumentácia",
+    "uploadDocument": "Nahrať dokument",
+    "documents": "Dokumenty",
+    "category": "Kategória",
+    "type": "Typ",
+    "uploadedBy": "Nahral",
+    "processed": "Spracované",
+    "chunks": "Chunky"
+  },
+  "reports": {
+    "title": "Reporty",
+    "downloadReport": "Stiahnuť report",
+    "generatedAt": "Vygenerované",
+    "model": "Model",
+    "prompt": "Prompt"
+  },
+  "audit": {
+    "title": "Audit Log",
+    "action": "Akcia",
+    "user": "Používateľ",
+    "entity": "Entita",
+    "timestamp": "Čas",
+    "changes": "Zmeny"
+  },
+  "settings": {
+    "title": "Nastavenia",
+    "language": "Jazyk",
+    "theme": "Téma",
+    "profile": "Profil",
+    "account": "Účet",
+    "notifications": "Notifikácie",
+    "languages": {
+      "sk": "Slovenčina",
+      "en": "English"
+    }
+  }
+}
+

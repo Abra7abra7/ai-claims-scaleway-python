@@ -1,0 +1,122 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "search": "Search",
+    "filter": "Filter",
+    "noData": "No data",
+    "confirm": "Confirm",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous"
+  },
+  "navigation": {
+    "dashboard": "Dashboard",
+    "claims": "Claims",
+    "rag": "Documentation",
+    "reports": "Reports",
+    "audit": "Audit Log",
+    "settings": "Settings"
+  },
+  "auth": {
+    "signIn": "Sign In",
+    "signUp": "Sign Up",
+    "signOut": "Sign Out",
+    "email": "Email",
+    "password": "Password",
+    "confirmPassword": "Confirm Password",
+    "forgotPassword": "Forgot Password?",
+    "orContinueWith": "or continue with",
+    "google": "Google",
+    "noAccount": "Don't have an account?",
+    "haveAccount": "Already have an account?",
+    "createAccount": "Create Account",
+    "welcomeBack": "Welcome Back",
+    "signInDescription": "Sign in to your account"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "welcome": "Welcome back",
+    "totalClaims": "Total Claims",
+    "pendingReview": "Pending Review",
+    "completed": "Completed",
+    "failed": "Failed",
+    "recentActivity": "Recent Activity",
+    "quickStats": "Quick Stats",
+    "byStatus": "By Status",
+    "byCountry": "By Country"
+  },
+  "claims": {
+    "title": "Claims",
+    "newClaim": "New Claim",
+    "uploadDocuments": "Upload Documents",
+    "selectCountry": "Select Country",
+    "status": "Status",
+    "country": "Country",
+    "createdAt": "Created At",
+    "documents": "Documents",
+    "analysis": "Analysis",
+    "actions": "Actions",
+    "viewDetails": "View Details",
+    "startAnalysis": "Start Analysis",
+    "approve": "Approve",
+    "reject": "Reject",
+    "ocrReview": "OCR Review",
+    "anonymizationReview": "Anonymization Review",
+    "statuses": {
+      "PROCESSING": "Processing",
+      "OCR_REVIEW": "OCR Review",
+      "CLEANING": "Cleaning",
+      "ANONYMIZING": "Anonymizing",
+      "ANONYMIZATION_REVIEW": "Anonymization Review",
+      "READY_FOR_ANALYSIS": "Ready for Analysis",
+      "ANALYZING": "Analyzing",
+      "ANALYZED": "Analyzed",
+      "FAILED": "Failed"
+    }
+  },
+  "rag": {
+    "title": "RAG Documentation",
+    "uploadDocument": "Upload Document",
+    "documents": "Documents",
+    "category": "Category",
+    "type": "Type",
+    "uploadedBy": "Uploaded By",
+    "processed": "Processed",
+    "chunks": "Chunks"
+  },
+  "reports": {
+    "title": "Reports",
+    "downloadReport": "Download Report",
+    "generatedAt": "Generated At",
+    "model": "Model",
+    "prompt": "Prompt"
+  },
+  "audit": {
+    "title": "Audit Log",
+    "action": "Action",
+    "user": "User",
+    "entity": "Entity",
+    "timestamp": "Timestamp",
+    "changes": "Changes"
+  },
+  "settings": {
+    "title": "Settings",
+    "language": "Language",
+    "theme": "Theme",
+    "profile": "Profile",
+    "account": "Account",
+    "notifications": "Notifications",
+    "languages": {
+      "sk": "Slovenčina",
+      "en": "English"
+    }
+  }
+}
+
