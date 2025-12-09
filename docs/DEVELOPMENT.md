@@ -1,471 +1,592 @@
 # 🛠️ Development Guide - AI Claims System
 
-Tento návod ti ukáže ako pracovať na projekte lokálne, testovať zmeny a pripravovať ich na deployment.
+**Last Updated:** December 9, 2024
+
+Kompletný návod pre vývoj, testovanie a deployment prípravu nových features.
 
 ---
 
 ## 📋 Obsah
 
-1. [Setup Lokálneho Vývojového Prostredia](#setup-lokálneho-vývojového-prostredia)
-2. [Štruktúra Projektu](#štruktúra-projektu)
-3. [Workflow pre Vývoj](#workflow-pre-vývoj)
-4. [Testovanie](#testovanie)
-5. [Debugging](#debugging)
-6. [Best Practices](#best-practices)
+1. [Setup Lokálneho Prostredia](#setup-lokálneho-prostredia)
+2. [Development Workflow](#development-workflow)
+3. [Pridanie Nového Endpointu](#pridanie-nového-endpointu)
+4. [Pridanie Novej Frontend Stránky](#pridanie-novej-frontend-stránky)
+5. [Type Generation](#type-generation)
+6. [Testing](#testing)
+7. [Debugging](#debugging)
+8. [Git Workflow](#git-workflow)
+9. [Best Practices](#best-practices)
 
 ---
 
-## 🚀 Setup Lokálneho Vývojového Prostredia
+## 🚀 Setup Lokálneho Prostredia
 
 ### Požiadavky
 
-- **Docker Desktop** (pre Mac/Windows) alebo **Docker Engine** (Linux)
+- **Docker + Docker Compose** (Docker Desktop pre Mac/Windows)
 - **Git**
-- **Python 3.11+** (voliteľné, pre lokálny development bez Dockeru)
-- **IDE**: VS Code, PyCharm, alebo Cursor
+- **Node.js 20+** (pre frontend development)
+- **Python 3.11+** (voliteľné, pre backend development bez Dockeru)
+- **IDE**: VS Code, Cursor, alebo PyCharm
 
-### 1. Clone Repository
+### Rýchly Štart (4 kroky)
 
 ```bash
+# 1. Clone repository
 git clone https://github.com/Abra7abra7/ai-claims-scaleway-python.git
 cd ai-claims-scaleway-python
-```
 
-### 2. Vytvor `.env` Súbor
-
-```bash
+# 2. Vytvor .env súbor
 cp .env.example .env
+# Vyplň: SMTP_*, MISTRAL_API_KEY alebo GEMINI_API_KEY
+
+# 3. Spusti Docker služby
+docker-compose up -d
+
+# 4. Vytvor admin usera
+docker-compose exec backend python scripts/init_admin.py
 ```
 
-Vyplň potrebné credentials v `.env`:
+**Hotovo!** Otvor http://localhost:3000
+
+### Potrebné Environment Variables
+
+Minimálne potrebné pre lokálny vývoj:
 
 ```env
-# Mistral AI
-MISTRAL_API_KEY=sk-...  # Tvoj Mistral API key
+# AI Provider (aspoň jeden)
+MISTRAL_API_KEY=your-key
+# alebo
+GEMINI_API_KEY=your-key
+LLM_PROVIDER=gemini
 
-# Scaleway S3 (production credentials alebo test bucket)
-S3_ACCESS_KEY=...
-S3_SECRET_KEY=...
-S3_BUCKET_NAME=ai-claims-docs-dev  # Použi dev bucket!
-S3_ENDPOINT_URL=https://s3.fr-par.scw.cloud
-S3_REGION=fr-par
+# Email (SMTP) - POVINNÉ!
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=tvoj-email@gmail.com
+SMTP_PASSWORD=tvoj-app-password  # Gmail App Password
+SMTP_FROM=noreply@company.com
+SMTP_USE_TLS=true
+FRONTEND_URL=http://localhost:3000
 
-# Database (môžeš použiť lokálny PostgreSQL alebo Scaleway dev DB)
-DATABASE_URL=postgresql://user:pass@host:port/db_dev
+# MinIO (lokálne S3)
+S3_ACCESS_KEY=minioadmin
+S3_SECRET_KEY=minioadmin123
+S3_BUCKET_NAME=ai-claims
+S3_ENDPOINT_URL=http://minio:9000
 
-# Redis (internal Docker)
-REDIS_URL=redis://redis:6379/0
+# Database (Docker internal)
+DATABASE_URL=postgresql://claims_user:claims_password@db:5432/claims_db
 
-# Presidio (internal Docker)
-PRESIDIO_URL=http://presidio:8001
+# Redis (Docker internal)
+REDIS_URL=redis://redis:6379
 ```
 
-**Dôležité:**
-- Použi **DEV/TEST credentials**, nie production!
-- Pre lokálny DB môžeš použiť lokálny PostgreSQL alebo Docker
+**NIKDY necommituj `.env` do Gitu!**
 
-### 3. Spusti Služby
+### Overenie Že Všetko Beží
 
 ```bash
-# Jednoduchý startup
-./local-start.sh
-
-# Alebo manuálne
-docker compose build
-docker compose up -d
-
-# Sleduj logy
-docker compose logs -f
-```
-
-### 4. Over Že Všetko Beží
-
-```bash
-# Kontajnery
-docker compose ps
+# Kontajnery status
+docker-compose ps
 
 # Health checks
-curl http://localhost:8001/health  # Presidio
-curl http://localhost:8000/claims/  # Backend
+curl http://localhost:8000/api/v1/health  # Backend
+curl http://localhost:8001/health         # Presidio
+curl http://localhost:3000                # Frontend
 
-# Frontend
-open http://localhost:8501
+# Logy
+docker-compose logs -f backend
 ```
 
 ---
 
-## 📁 Štruktúra Projektu
-
-```
-ai-claims-scaleway-python/
-├── app/                        # Backend aplikácia
-│   ├── core/
-│   │   ├── config.py          # Pydantic settings (env variables)
-│   │   └── config_loader.py   # YAML config loader
-│   ├── db/
-│   │   ├── models.py          # SQLAlchemy modely (Claim, Document, atď.)
-│   │   └── session.py         # Database session
-│   ├── services/              # Business logic
-│   │   ├── storage.py         # S3 operations
-│   │   ├── ocr.py             # Mistral OCR
-│   │   ├── cleaner.py         # Text cleaning
-│   │   ├── mistral.py         # Mistral AI client
-│   │   ├── rag.py             # RAG system
-│   │   ├── report_generator.py # PDF generation
-│   │   ├── audit.py           # Audit logging
-│   │   └── anonymizer.py      # (legacy, now uses Presidio API)
-│   ├── api/                   # API endpoints (ak existuje)
-│   ├── main.py                # FastAPI app (routes)
-│   ├── worker.py              # Celery tasks
-│   └── prompts.py             # (deprecated - now in config/settings.yaml)
-│
-├── frontend/                  # Next.js Frontend
-│   ├── src/                   # Source code
-│   │   ├── app/               # Next.js App Router
-│   │   ├── components/        # React components
-│   │   └── lib/               # Utilities & API types
-│   ├── package.json           # Dependencies
-│   └── Dockerfile             # Docker build
-│
-├── presidio-api/              # Samostatná Presidio služba
-│   ├── app.py                 # FastAPI wrapper pre Presidio
-│   ├── requirements.txt
-│   └── Dockerfile
-│
-├── config/
-│   └── settings.yaml          # Centrálna konfigurácia
-│                              # (prompts, LLM settings, Presidio config)
-│
-├── scripts/
-│   ├── migrate_db.py          # Database migrations
-│   └── verify_connections.py # Test connections
-│
-├── deploy/                    # Deployment skripty
-│   ├── setup.sh              # Server setup
-│   ├── install.sh            # App deployment
-│   ├── update.sh             # Update script
-│   └── README.md             # Deployment guide
-│
-├── docs/                      # Dokumentácia
-│   ├── DEVELOPMENT.md         # Tento súbor
-│   └── DEPLOYMENT_UPDATES.md  # Deployment guide
-│
-├── docker-compose.yml         # Development config
-├── docker-compose.prod.yml    # Production overrides
-├── Dockerfile.backend
-├── Dockerfile.frontend
-├── requirements.txt           # Python dependencies
-├── .env.example               # Template pre .env
-├── .gitignore
-├── Makefile                   # Helper commands
-├── local-start.sh            # Local startup script
-└── README.md
-```
-
----
-
-## 🔄 Workflow pre Vývoj
+## 🔄 Development Workflow
 
 ### Typický Development Cycle
 
 ```bash
-# 1. Vytvor nový branch
-git checkout -b feature/moja-nova-funkcia
+# 1. Vytvor feature branch
+git checkout -b feature/nova-funkcia
 
 # 2. Uprav kód
-# Edituj súbory v app/, frontend/, config/, atď.
+# Edituj súbory v app/, frontend/src/, atď.
 
-# 3. Reštartuj príslušné služby
-docker compose restart backend    # Ak si menil backend
-docker compose restart worker     # Ak si menil worker tasks
-docker compose restart frontend   # Ak si menil frontend
+# 3. Reštartuj služby (ak treba)
+docker-compose restart backend   # Backend zmeny
+docker-compose restart worker    # Worker tasks zmeny
+docker-compose restart frontend  # Frontend zmeny (ale hot reload funguje)
 
-# 4. Testuj zmeny
-# Otvor http://localhost:8501 a testuj manuálne
+# 4. Testuj
+# Frontend: http://localhost:3000 (auto-reload)
+# Backend API: http://localhost:8000/api/v1/docs
 
 # 5. Sleduj logy
-docker compose logs -f backend
-docker compose logs -f worker
+docker-compose logs -f backend
 
-# 6. Commit zmeny
+# 6. Commit & push
 git add .
-git commit -m "feat: pridaná nová funkcia XYZ"
-
-# 7. Push do remote
-git push origin feature/moja-nova-funkcia
+git commit -m "feat: pridaná nova funkcia"
+git push origin feature/nova-funkcia
 ```
 
-### Kde Robiť Zmeny
+---
 
-#### 1. **Backend API Endpoints** (`app/main.py`)
+## 🔌 Pridanie Nového Endpointu
 
-Pridanie nového endpointu:
+### 1. Vytvor Pydantic Schema
+
+**Súbor:** `app/api/v1/schemas/my_feature.py`
 
 ```python
-@app.post("/my-new-endpoint")
-async def my_new_endpoint(data: MyModel):
-    # Your logic here
-    return {"status": "ok"}
+from pydantic import BaseModel
+from datetime import datetime
+
+class MyFeatureRequest(BaseModel):
+    name: str
+    value: int
+
+class MyFeatureResponse(BaseModel):
+    id: int
+    name: str
+    value: int
+    created_at: datetime
 ```
 
-Po zmene:
-```bash
-docker compose restart backend
-```
+### 2. Vytvor Endpoint Handler
 
-#### 2. **Celery Worker Tasks** (`app/worker.py`)
-
-Pridanie novej async úlohy:
+**Súbor:** `app/api/v1/endpoints/my_feature.py`
 
 ```python
-@celery_app.task(name="app.worker.my_new_task")
-def my_new_task(param1: str):
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session
+
+from app.api.deps import get_database
+from app.api.v1.schemas.my_feature import MyFeatureRequest, MyFeatureResponse
+
+router = APIRouter()
+
+@router.post("", response_model=MyFeatureResponse)
+def create_feature(
+    data: MyFeatureRequest,
+    db: Session = Depends(get_database)
+):
+    """
+    Create new feature.
+    """
     # Your logic here
-    return f"Task completed: {param1}"
+    return MyFeatureResponse(
+        id=1,
+        name=data.name,
+        value=data.value,
+        created_at=datetime.utcnow()
+    )
+
+@router.get("/{id}", response_model=MyFeatureResponse)
+def get_feature(id: int, db: Session = Depends(get_database)):
+    """
+    Get feature by ID.
+    """
+    # Your logic here
+    pass
 ```
 
-Po zmene:
+### 3. Registruj v Router
+
+**Súbor:** `app/api/v1/router.py`
+
+```python
+from app.api.v1.endpoints import my_feature  # Import
+
+api_router = APIRouter()
+
+# Register new router
+api_router.include_router(
+    my_feature.router,
+    prefix="/my-feature",
+    tags=["My Feature"]
+)
+```
+
+### 4. Reštartuj Backend
+
 ```bash
-docker compose restart worker
+docker-compose restart backend
 ```
 
-#### 3. **Frontend UI** (`frontend/src/app/`)
+### 5. Vygeneruj TypeScript Typy
 
-Pridanie novej stránky (Next.js App Router):
+```bash
+cd frontend
+npm run generate-types
+```
 
-```typescript
-// frontend/src/app/my-page/page.tsx
+**Hotovo!** Nový endpoint je dostupný na `/api/v1/my-feature` a typy sú vygenerované vo `frontend/src/lib/api-types.ts`.
+
+---
+
+## 🎨 Pridanie Novej Frontend Stránky
+
+### 1. Vytvor Page Component
+
+**Súbor:** `frontend/src/app/my-page/page.tsx`
+
+```tsx
+"use client";
+
+import { useTranslations } from "next-intl";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+
 export default function MyPage() {
+  const t = useTranslations("myPage");
+
   return (
-    <div>
-      <h1>Moja Nová Stránka</h1>
-      {/* Your React components here */}
+    <div className="container mx-auto py-6">
+      <h1 className="text-3xl font-bold mb-6">{t("title")}</h1>
+      
+      <Card className="p-6">
+        <p>{t("description")}</p>
+        <Button className="mt-4">{t("action")}</Button>
+      </Card>
     </div>
   );
 }
 ```
 
-Po zmene (hot reload v dev móde):
-```bash
-# Zmeny sa automaticky prejavia v dev móde
-# Pre produkčný build:
-docker compose restart frontend
+### 2. Pridaj Preklady
+
+**Súbor:** `frontend/src/messages/sk.json`
+
+```json
+{
+  "myPage": {
+    "title": "Moja Stránka",
+    "description": "Toto je moja nová stránka.",
+    "action": "Vykonaj akciu"
+  }
+}
 ```
 
-#### 4. **Database Models** (`app/db/models.py`)
+**Súbor:** `frontend/src/messages/en.json`
 
-Pridanie nového stĺpca alebo tabuľky:
-
-```python
-class MyNewModel(Base):
-    __tablename__ = "my_table"
-    id = Column(Integer, primary_key=True)
-    name = Column(String)
+```json
+{
+  "myPage": {
+    "title": "My Page",
+    "description": "This is my new page.",
+    "action": "Perform Action"
+  }
+}
 ```
 
-Po zmene:
-```bash
-# Uprav scripts/migrate_db.py
-# Spusti migráciu
-docker compose exec backend python scripts/migrate_db.py
+### 3. Pridaj do Sidebar Menu
+
+**Súbor:** `frontend/src/components/layout/sidebar.tsx`
+
+```tsx
+const navItems = [
+  // ... existing items ...
+  {
+    href: "/my-page",
+    label: t("nav.myPage"),
+    icon: IconName,
+  },
+];
 ```
 
-#### 5. **Konfigurácia** (`config/settings.yaml`)
+### 4. Testuj
 
-Zmeny v LLM nastaveniach, promptoch, Presidio config:
-
-```yaml
-llm:
-  analysis_model: mistral-large-latest  # Upgrade modelu
-
-prompts:
-  my_new_prompt:
-    name: "Môj Nový Prompt"
-    template: |
-      Your prompt here...
-```
-
-Po zmene:
-```bash
-docker compose restart backend worker
-```
+Otvor http://localhost:3000/my-page - Next.js hot reload automaticky načíta novú stránku!
 
 ---
 
-## 🧪 Testovanie
+## 🔄 Type Generation
+
+### Automatická Generácia
+
+TypeScript typy sa generujú automaticky pri `git commit` pomocou **pre-commit hook**.
+
+**Ako to funguje:**
+1. Commit zmeny v `app/api/v1/schemas/*.py`
+2. Git hook detekuje backend zmeny
+3. Automaticky spustí `npm run generate-types` vo `frontend/`
+4. Typy sa vygenerujú do `frontend/src/lib/api-types.ts`
+5. Súbor sa automaticky pridá do commitu
+
+### Manuálna Generácia
+
+```bash
+cd frontend
+npm run generate-types
+```
+
+### Watch Mode (pre aktívny vývoj)
+
+```bash
+cd frontend
+npm run types:watch
+```
+
+Typy sa budú automaticky regenerovať pri každej zmene v `app/` priečinku.
+
+**Viac info:** [`docs/GIT_HOOKS.md`](GIT_HOOKS.md)
+
+---
+
+## 🧪 Testing
 
 ### Manuálne Testovanie
 
-1. **Upload dokumentu** cez Frontend
-2. **Sleduj logy** worker-a:
-   ```bash
-   docker compose logs -f worker
-   ```
-3. **Skontroluj OCR Review** stránku
-4. **Schváľ OCR** a sleduj cleaning + anonymizáciu
-5. **Skontroluj Anonymization Review**
-6. **Schváľ anonymizáciu** a spusti AI analýzu
-7. **Stiahni report**
+**Kompletný flow:**
+1. Upload PDF dokumentu (`/claims/new`)
+2. Sleduj worker logy: `docker-compose logs -f worker`
+3. OCR review (`/claims/[id]/ocr`)
+4. Approve OCR
+5. Anonymization review (`/claims/[id]/anon`)
+6. Approve anonymization
+7. Start analysis (`/claims/[id]/analysis`)
+8. Download report (`/reports`)
 
-### API Testovanie
+### API Testovanie (curl)
 
 ```bash
-# Test upload
-curl -X POST http://localhost:8000/upload/ \
-  -F "files=@test.pdf" \
-  -F "country=SK"
+# Health check
+curl http://localhost:8000/api/v1/health
 
-# Test health endpoints
-curl http://localhost:8000/claims/
-curl http://localhost:8001/health
+# List claims
+curl http://localhost:8000/api/v1/claims \
+  -H "Cookie: session_token=YOUR_TOKEN"
 
-# Test Presidio anonymization
-curl -X POST http://localhost:8001/anonymize \
-  -H "Content-Type: application/json" \
-  -d '{
-    "text": "Ján Novák 901231/1234",
-    "country": "SK",
-    "language": "en"
-  }'
+# Upload claim
+curl -X POST http://localhost:8000/api/v1/claims \
+  -F "file=@test.pdf" \
+  -F "country=SK" \
+  -H "Cookie: session_token=YOUR_TOKEN"
 ```
 
-### Unit Testy (TODO)
+### Swagger UI
+
+Otvor http://localhost:8000/api/v1/docs pre interaktívne API testovanie.
+
+### Frontend Testing
 
 ```bash
-# Budúce rozšírenie
-pytest tests/
+cd frontend
+npm run lint       # ESLint check
+npm run build      # Production build test
 ```
 
 ---
 
 ## 🐛 Debugging
 
-### Logs
+### Zobrazenie Logov
 
 ```bash
 # Všetky služby
-docker compose logs -f
+docker-compose logs -f
 
-# Špecifická služba
-docker compose logs -f backend
-docker compose logs -f worker
-docker compose logs -f presidio
-docker compose logs -f frontend
+# Konkrétna služba
+docker-compose logs -f backend
+docker-compose logs -f worker
+docker-compose logs -f frontend
 
-# Posledných N riadkov
-docker compose logs --tail=50 worker
+# Posledných 100 riadkov
+docker-compose logs --tail 100 backend
 
-# Grep pre errors
-docker compose logs worker | grep -i "error"
+# Filtrovať errors
+docker-compose logs backend | grep ERROR
 ```
 
 ### Pripojenie do Kontajnera
 
 ```bash
 # Backend shell
-docker compose exec backend bash
+docker-compose exec backend bash
 
 # Worker shell
-docker compose exec worker bash
+docker-compose exec worker bash
 
-# Spusti Python v kontajneri
-docker compose exec backend python
->>> from app.db.session import SessionLocal
+# Python REPL v kontajneri
+docker-compose exec backend python
+>>> from app.db.models import User
+>>> from app.db.database import SessionLocal
 >>> db = SessionLocal()
->>> # Testuj databázové queries
+>>> users = db.query(User).all()
+>>> print(users)
 ```
 
 ### Database Debugging
 
 ```bash
 # Pripoj sa k PostgreSQL
-psql $DATABASE_URL
+docker-compose exec db psql -U claims_user -d claims_db
 
-# V psql
-\dt                          # List tables
-SELECT * FROM claims LIMIT 5;
-SELECT * FROM claim_documents WHERE claim_id = 1;
-\q
+# SQL queries
+SELECT * FROM users;
+SELECT * FROM claims ORDER BY created_at DESC LIMIT 10;
+SELECT * FROM audit_logs WHERE action LIKE 'LOGIN%';
+\dt  # List tables
+\d users  # Describe table
+\q  # Quit
 ```
 
-### Health Checks
+### Časté Problémy
+
+#### Email sa neposiela
+```bash
+# Over ENV variables
+docker-compose exec backend python -c "from app.core.config import get_settings; s = get_settings(); print(f'SMTP: {s.SMTP_HOST}:{s.SMTP_PORT}')"
+
+# Reštartuj s novými ENV
+docker-compose down backend
+docker-compose up -d backend
+```
+
+#### Worker task zaseknutý
+```bash
+# Zisti stav Redis queue
+docker-compose exec redis redis-cli LLEN celery
+
+# Reštartuj worker
+docker-compose restart worker
+```
+
+#### Frontend 404 na novej stránke
+```bash
+# Next.js potrebuje reload pre nové routes
+docker-compose restart frontend
+```
+
+---
+
+## 📝 Git Workflow
+
+### Branching Strategy
 
 ```bash
-# Makefile command
-make health
-
-# Alebo manuálne
-curl http://localhost:8000/claims/
-curl http://localhost:8001/health
-docker compose exec redis redis-cli ping
+main                          # Production code
+  └─ feature/nova-funkcia     # Feature development
+  └─ fix/oprava-bugu          # Bug fixes
 ```
+
+### Commit Messages
+
+Používaj **Conventional Commits**:
+
+```bash
+feat: pridaná email verifikácia
+fix: opravený CORS error
+docs: aktualizovaný README
+refactor: zlepšený OCR service
+chore: update dependencies
+```
+
+### Development Cycle
+
+```bash
+# 1. Vytvor branch
+git checkout main
+git pull
+git checkout -b feature/moja-funkcia
+
+# 2. Vývoj a commit
+git add .
+git commit -m "feat: pridaná funkcia X"
+
+# 3. Push
+git push origin feature/moja-funkcia
+
+# 4. Po merge
+git checkout main
+git pull
+git branch -d feature/moja-funkcia
+```
+
+### Pre-Commit Hooks
+
+Projekt má automatické hooks:
+- ✅ TypeScript typy sa generujú automaticky
+- ✅ Viac info: [`docs/GIT_HOOKS.md`](GIT_HOOKS.md)
 
 ---
 
 ## ✅ Best Practices
 
-### Git Workflow
+### Code Quality
 
-1. **Vždy vytvor nový branch** pre novú feature
-2. **Používaj descriptive commit messages**:
-   - `feat: pridaná nová funkcia`
-   - `fix: opravená chyba v anonymizácii`
-   - `docs: aktualizovaná dokumentácia`
-3. **Commit často** (malé atomic commits)
-4. **Push do remote** pravidelne
+**Python (Backend):**
+- ✅ Type hints pre všetky funkcie
+- ✅ Pydantic schemas pre validation
+- ✅ Docstrings pre public API
+- ✅ PEP 8 formatting
 
-### Code Style
+**TypeScript (Frontend):**
+- ✅ Používaj auto-generated `api-types.ts`
+- ✅ Strict mode enabled
+- ✅ Type všetky props a state
+- ✅ ESLint compliance
 
-- **Python**: Dodržuj PEP 8
-- **Docstrings**: Dokumentuj funkcie a classy
-- **Type Hints**: Použi type hints kde je to možné
-- **Comments**: Píš komentáre pre zložitú logiku
+### Security **KRITICKÉ**
 
-### Environment Variables
-
-- **Nikdy** necommituj `.env` súbor!
-- **Vždy** používaj `.env.example` ako template
-- **Test credentials**: Použi DEV credentials, nie production
+- 🔒 **NIKDY** necommituj `.env` do Gitu!
+- 🔒 **NIKDY** neloguj passwords/tokens
+- 🔒 Používaj DEV credentials lokálne
+- 🔒 Validuj všetky inputs (Pydantic)
+- 🔒 Sanitizuj SQL (SQLAlchemy ORM)
 
 ### Docker
 
-- **Reštartuj služby** po zmenách kódu
-- **Build cache**: Použi `--no-cache` ak máš problémy:
-  ```bash
-  docker compose build --no-cache backend
-  ```
-- **Vyčisti resources**: 
-  ```bash
-  docker system prune -af
-  ```
+```bash
+# Hot reload je enabled (volumes mounted)
+# Rebuild len ak dependencies zmenené
+docker-compose build --no-cache backend
+
+# Cleanup
+docker system prune -af
+docker volume prune -f
+```
 
 ### Database
 
-- **Nikdy** nemazuj production dáta!
-- **Backup** pred veľkými zmenami v schéme
-- **Migrácie**: Vždy testuj najprv lokálne
+1. ✅ Testuj migrácie lokálne
+2. ✅ Backup pred production migráciou
+3. ✅ Rollback plán pripravený
+4. ✅ Nikdy `DROP TABLE` v production!
+
+### Performance
+
+- ⚡ `react-query` cache pre API calls
+- ⚡ Lazy load Next.js pages
+- ⚡ Debounce search inputs
+- ⚡ Index DB queries (pgvector)
+- ⚡ Celery pre long-running tasks
 
 ---
 
-## 🚢 Priprava na Deployment
+## 🚀 Deployment Príprava
 
 Pred nasadením na production:
 
-1. **Testuj lokálne** všetky zmeny
-2. **Commit a push** do `main` branchu
-3. **Sleduj** [DEPLOYMENT_UPDATES.md](DEPLOYMENT_UPDATES.md) pre deployment steps
-4. **Backup** production databázy (ak robíš DB zmeny)
-5. **Deploy** na staging (ak máš) pred production
+1. ✅ **Testuj lokálne** kompletný flow
+2. ✅ **Commit a push** do `main`
+3. ✅ **Backup production DB** (ak DB zmeny)
+4. ✅ **Sleduj deployment guide**: [`docs/PRODUCTION_DEPLOYMENT.md`](PRODUCTION_DEPLOYMENT.md)
+5. ✅ **Reštartuj služby** na serveri
+6. ✅ **Overil health checks** po deploye
 
 ---
 
-## 📞 Pomoc
+## 📚 Ďalšie Zdroje
 
-- **Logy**: Vždy najprv skontroluj logy
-- **Documentation**: Pozri ostatné `.md` súbory
-- **Issues**: Otvor issue na GitHube ak niečo nejde
+- **[`docs/HANDOVER.md`](HANDOVER.md)** - Kompletný prehľad systému
+- **[`docs/ARCHITECTURE.md`](ARCHITECTURE.md)** - Technická architektúra
+- **[`docs/PRODUCTION_DEPLOYMENT.md`](PRODUCTION_DEPLOYMENT.md)** - Deployment na server
+- **[`docs/GIT_HOOKS.md`](GIT_HOOKS.md)** - Type generation automation
 
 ---
 
-**Happy coding! 🎉**
-
+**Last Updated:** December 9, 2024  
+**Happy coding! 🚀**

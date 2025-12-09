@@ -1,8 +1,15 @@
 # 🤖 AI Claims Processing System
 
-Inteligentný systém na spracovanie poistných udalostí s využitím AI, OCR, anonymizácie a analýzy dokumentov.
+**Prvý AI asistent pre spracovanie poistných udalostí v súlade s EU právom**
 
-**Pre regulované prostredie (poisťovňa)** s plným audit loggingom a bezpečnou autentifikáciou.
+Inteligentný systém pre regulované prostredie poisťovne s automatizovaným spracovaním PDF dokumentov, GDPR anonymizáciou, a AI analýzou s plným audit loggingom.
+
+---
+
+**📚 Kompletná dokumentácia:** [`docs/HANDOVER.md`](docs/HANDOVER.md)  
+**🏗️ Technická architektúra:** [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)  
+**👨‍💻 Development guide:** [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md)  
+**🚀 Production deployment:** [`docs/PRODUCTION_DEPLOYMENT.md`](docs/PRODUCTION_DEPLOYMENT.md)
 
 ## ✨ Hlavné Funkcie
 
@@ -46,221 +53,160 @@ Inteligentný systém na spracovanie poistných udalostí s využitím AI, OCR, 
 
 ## 🚀 Rýchly Štart
 
-### Lokálny Vývoj
+### Lokálny Vývoj (4 kroky)
 
 ```bash
 # 1. Clone repository
 git clone https://github.com/Abra7abra7/ai-claims-scaleway-python.git
 cd ai-claims-scaleway-python
 
-# 2. Vytvor .env súbor (pozri .env.example)
+# 2. Nakonfiguruj .env súbor
 cp .env.example .env
-# Vyplň potrebné credentials
+# Vyplň: SMTP credentials, API keys (Mistral/Gemini)
 
-# 3. Spusti služby
-docker compose up -d
+# 3. Spusti Docker služby
+docker-compose up -d
 
-# 4. Vytvor admin používateľa (prvýkrát)
-docker compose exec backend python -c "
-from app.db.session import SessionLocal
-from app.db.models import User, UserRole
-from app.services.auth import hash_password
-db = SessionLocal()
-admin = User(
-    email='admin@example.com',
-    password_hash=hash_password('admin123456'),
-    name='Admin',
-    role='admin',
-    locale='sk',
-    is_active=True,
-    email_verified=True
-)
-db.add(admin)
-db.commit()
-print('Admin created!')
-db.close()
-"
-
-# 5. Otvor v prehliadači
-# Frontend: http://localhost:3000
-# API Docs: http://localhost:8000/api/v1/docs
+# 4. Vytvor admin používateľa
+docker-compose exec backend python scripts/init_admin.py
 ```
 
-### Prihlasovacie údaje (demo)
+**Hotovo!** Otvor http://localhost:3000 a prihlás sa:
+- Email: `admin@example.com`
+- Password: `admin123`
 
-```
-Email: admin@example.com
-Password: admin123456
-```
-
-⚠️ **Zmeňte heslo po prvom prihlásení!**
-
-Detailný návod: [QUICK_START.md](QUICK_START.md)
-
-### Produkčné Nasadenie na Scaleway
+### Production Deployment (IBM Server v Novis)
 
 ```bash
-# Na Scaleway serveri
-cd /opt/ai-claims
-git clone https://github.com/Abra7abra7/ai-claims-scaleway-python.git .
+# SSH do servera
+ssh user@10.85.55.26
 
-# Vytvor .env súbor
-nano .env
+# Pull najnovšie zmeny
+cd /path/to/ai-claims
+git pull
 
-# Spusti deployment
-chmod +x deploy/install.sh
-./deploy/install.sh
+# Spusti s production konfiguráciou
+docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 ```
 
-Kompletný guide: [deploy/README.md](deploy/README.md)
+**URL:** https://ai-claims.novis.eu
 
-## 🔐 Autentifikácia (Enterprise)
+Kompletný deployment návod: [`docs/PRODUCTION_DEPLOYMENT.md`](docs/PRODUCTION_DEPLOYMENT.md)
 
-Systém obsahuje bezpečnú autentifikáciu vhodnú pre regulované prostredie:
+## 🔐 Bezpečnosť & Autentifikácia
 
-### Funkcie
+### Enterprise-Grade Auth
+- ✅ **PBKDF2-SHA256** password hashing (100k iterácií)
+- ✅ **DB-based sessions** uložené v PostgreSQL (nie JWT v localStorage)
+- ✅ **HTTP-only cookies** pre session tokens
+- ✅ **Email verification** povinná pred prihlásením
+- ✅ **Password reset** cez email s jednorázovými tokenmi
+- ✅ **IP + User-Agent logging** pre každú session
+- ✅ **Session management** - možnosť odhlásiť konkrétne zariadenia
+- ✅ **Audit trail** každej akcie (GDPR compliance)
+- ✅ **Role-based access** (ADMIN, USER)
 
-| Funkcia | Popis |
-|---------|-------|
-| **DB Sessions** | Sessions uložené v PostgreSQL |
-| **IP Logging** | Každé prihlásenie zaznamenáva IP a User-Agent |
-| **Audit Trail** | LOGIN_SUCCESS, LOGIN_FAILED, LOGOUT, PASSWORD_CHANGED |
-| **Session Management** | Možnosť odhlásiť konkrétne zariadenie |
-| **Role-based Access** | ADMIN, USER, VIEWER |
-| **Account Lock** | Admin môže zablokovať účet |
-| **Inactivity Timeout** | Automatické odhlásenie po 24h nečinnosti |
-
-### Auth API Endpoints
-
-```
-POST /api/v1/auth/register     - Registrácia
-POST /api/v1/auth/login        - Prihlásenie
-POST /api/v1/auth/logout       - Odhlásenie
-GET  /api/v1/auth/me           - Info o používateľovi
-POST /api/v1/auth/password/change - Zmena hesla
-GET  /api/v1/auth/sessions     - Aktívne sessions
-POST /api/v1/auth/sessions/{id}/revoke - Zrušiť session
-POST /api/v1/auth/sessions/revoke-all - Odhlásiť všade
-
-# Admin endpoints
-GET  /api/v1/auth/admin/users
-POST /api/v1/auth/admin/users/{id}/disable
-POST /api/v1/auth/admin/users/{id}/enable
-```
-
-## 📖 Dokumentácia
-
-- **[QUICK_START.md](QUICK_START.md)** - Rýchly štart pre lokálny vývoj
-- **[docs/DEVELOPMENT.md](docs/DEVELOPMENT.md)** - Návod na vývoj a testovanie
-- **[docs/DEPLOYMENT_UPDATES.md](docs/DEPLOYMENT_UPDATES.md)** - Ako nasadzovať nové zmeny
-- **[docs/PROJECT_STATUS.md](docs/PROJECT_STATUS.md)** - Aktuálny stav projektu
-- **[deploy/README.md](deploy/README.md)** - Produkčný deployment na Scaleway
-- **[DEPLOYMENT_CHECKLIST.md](DEPLOYMENT_CHECKLIST.md)** - Deployment checklist
-- **[CHANGELOG_FIX.md](CHANGELOG_FIX.md)** - História opráv a zmien
+### GDPR Compliance
+- ✅ **PII anonymizácia** cez Microsoft Presidio (country-specific: SK, IT, DE)
+- ✅ **Kompletný audit log** všetkých akcií
+- ✅ **Data minimization** - len potrebné údaje
+- ✅ **Right to be forgotten** - možnosť vymazať user data
 
 ## 🛠️ Tech Stack
 
-**Backend:** FastAPI, SQLAlchemy, Celery, Pydantic, PBKDF2 password hashing  
-**Frontend:** Next.js 16, React 19, TailwindCSS v4, shadcn/ui, next-intl  
-**AI & ML:** Mistral AI, Google Gemini, OpenAI (modulárna podpora), Microsoft Presidio, pgvector  
-**Auth:** Custom DB sessions, HTTP-only cookies, role-based access  
-**Infrastructure:** Docker, PostgreSQL, Redis, S3  
-**Cloud:** Scaleway (Managed PostgreSQL, Object Storage, Compute)
+| Layer | Technologies |
+|-------|-------------|
+| **Frontend** | Next.js 16, React 19, TypeScript 5, Tailwind CSS, shadcn/ui, next-intl |
+| **Backend** | FastAPI 0.100+, Python 3.11, Pydantic v2, SQLAlchemy 2.0 |
+| **Database** | PostgreSQL 16 + pgvector extension |
+| **Storage** | MinIO (S3-compatible) / Scaleway Object Storage |
+| **Queue** | Redis 7 + Celery 5 |
+| **AI Services** | Mistral AI, Google Gemini, OpenAI, Microsoft Presidio |
+| **Infrastructure** | Docker + Docker Compose |
+| **Current Hosting** | IBM Server v Novis (10.85.55.26) |
 
-## 🤖 AI Provider Configuration
+Kompletný tech stack: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
 
-Systém podporuje **modulárnu architektúru** pre AI providerov.
+## 📋 Workflow Spracovania Poistnej Udalosti
 
-### Podporované Provideri
-
-- **Mistral AI** - Pre OCR a LLM analýzu
-- **Google Gemini** - Pre LLM analýzu (gemini-1.5-pro, gemini-1.5-flash)
-- **OpenAI** - Pre LLM analýzu (gpt-4-turbo, gpt-3.5-turbo)
-
-### Konfigurácia
-
-```env
-LLM_PROVIDER=gemini  # mistral, openai, gemini
-LLM_MODEL_VERSION=gemini-1.5-flash
-OCR_PROVIDER=mistral
+```
+1. 📤 Upload PDF
+   ↓
+2. 🔍 OCR Extrakcia (Mistral AI)
+   ↓
+3. 👁️ Human Review #1 (OCR kontrola)
+   ↓
+4. 🧹 Data Cleaning (pravidlové čistenie)
+   ↓
+5. 🔒 Anonymizácia (Presidio - country-specific)
+   ↓
+6. 👁️ Human Review #2 (anonymizácia kontrola)
+   ↓
+7. 🤖 AI Analýza (RAG-enhanced)
+   ↓
+8. 📄 PDF Report Generovanie
+   ↓
+9. ✅ Hotovo (audit log každého kroku)
 ```
 
-## 📋 Workflow
+Detailný workflow: [`docs/HANDOVER.md#workflow`](docs/HANDOVER.md#workflow-spracovania-poistnej-udalosti)
 
-1. **Upload** → Nahranie PDF dokumentov
-2. **OCR** → Extrakcia textu (Mistral Document AI)
-3. **OCR Review** → Human-in-the-Loop kontrola
-4. **Cleaning** → Čistenie a normalizácia textu
-5. **Anonymization** → PII removal (Presidio)
-6. **Anonymization Review** → Human-in-the-Loop kontrola
-7. **AI Analysis** → Analýza s RAG (vybraný LLM provider)
-8. **Report** → Generovanie PDF reportu
+## 📊 Aktuálny Stav
 
-## 🔐 Environment Variables
+**Status:** ✅ Production-ready (9. december 2024)
 
-```env
-# ==============================================
-# 🔐 AUTH
-# ==============================================
-BETTER_AUTH_SECRET=your-32-char-secret
+| Komponent | Status |
+|-----------|--------|
+| Frontend (Next.js) | ✅ Funkčný |
+| Backend (FastAPI) | ✅ Funkčný |
+| Autentifikácia | ✅ Enterprise-ready |
+| Email flows | ✅ Funkčné (verification + password reset) |
+| OCR spracovanie | ✅ Funkčné (Mistral AI) |
+| Anonymizácia | ✅ Funkčná (Presidio SK/IT/DE) |
+| AI analýza | ✅ Funkčná (RAG-enhanced) |
+| PDF reporty | ✅ Funkčné |
+| Audit logging | ✅ Kompletný trail |
+| Multi-language | ✅ SK/EN |
 
-# ==============================================
-# 🤖 AI PROVIDER SELECTION
-# ==============================================
-LLM_PROVIDER=mistral
-OCR_PROVIDER=mistral
+**Deployment:** IBM Server v Novis (https://ai-claims.novis.eu)
 
-# ==============================================
-# 🔑 API KEYS
-# ==============================================
-MISTRAL_API_KEY=your_mistral_key
-OPENAI_API_KEY=your_openai_key
-GEMINI_API_KEY=your_gemini_key
+## 🆘 Riešenie Problémov
 
-# ==============================================
-# ☁️ SCALEWAY STORAGE & DATABASE
-# ==============================================
-S3_ACCESS_KEY=your_access_key
-S3_SECRET_KEY=your_secret_key
-S3_BUCKET_NAME=your_bucket_name
-S3_ENDPOINT_URL=https://s3.fr-par.scw.cloud
-S3_REGION=fr-par
+**Dokumentácia:**
+- [`docs/HANDOVER.md#riešenie-problémov`](docs/HANDOVER.md#riešenie-problémov) - Časté problémy a riešenia
+- [`docs/PRODUCTION_DEPLOYMENT.md`](docs/PRODUCTION_DEPLOYMENT.md) - Deployment troubleshooting
+- [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md) - Development guidelines
 
-DATABASE_URL=postgresql://user:pass@host:port/db
-REDIS_URL=redis://redis:6379/0
-PRESIDIO_URL=http://presidio:8001
+**Logy:**
+```bash
+# Backend logs
+docker-compose logs -f backend
+
+# Worker logs
+docker-compose logs -f worker
+
+# Všetky služby
+docker-compose logs -f
 ```
 
-**Nikdy necommituj `.env` súbor do Gitu!**
+## 👥 Pre Kolegov
 
-## 📊 Status Projektu
+Tento systém je odovzdaný s kompletnou dokumentáciou pre ďalší vývoj a prevádzku.
 
-✅ **Produkčný deployment dokončený**  
-✅ Všetky služby funkčné  
-✅ Backend autentifikácia s audit logom  
-✅ Presidio anonymizácia funguje  
-✅ RAG systém implementovaný  
-✅ PDF report generation  
-✅ Modulárna podpora AI providerov (Mistral, Gemini)  
-✅ Retry & Recovery mechanizmy  
-✅ Next.js 16 frontend s dark theme  
-✅ Multi-language support (SK/EN)
+**Začni tu:** [`docs/HANDOVER.md`](docs/HANDOVER.md)
 
-## 🆘 Support & Troubleshooting
-
-**Časté problémy a riešenia:**
-- [QUICK_START.md - Troubleshooting sekcia](QUICK_START.md#troubleshooting)
-- [DEPLOYMENT_CHECKLIST.md - Troubleshooting guide](DEPLOYMENT_CHECKLIST.md#troubleshooting)
-
-**Kontakt:** Otvor issue na GitHube
-
-## 📝 Licencia
-
-Proprietary - All rights reserved
+Dokument obsahuje:
+- História vývoja a hostingu (Scaleway → lokálny → IBM)
+- Kompletná architektúra
+- Bezpečnostné vlastnosti
+- Lokálny vývoj setup
+- Production deployment
+- Správa systému (users, sessions, backups)
+- Riešenie problémov
+- Budúci vývoj (2FA, OAuth, atď.)
 
 ---
 
-**Projekt je nasadený a funguje na Scaleway infraštruktúre.**  
-Pre viac informácií pozri dokumentáciu v `/docs` priečinku.
-
-**Last updated:** 2024-12-09
+**Last Updated:** December 9, 2024  
+**Version:** 1.0  
+**License:** Proprietary
