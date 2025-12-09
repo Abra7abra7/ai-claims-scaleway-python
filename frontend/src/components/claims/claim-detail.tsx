@@ -1,9 +1,11 @@
 "use client";
 
+import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
   FileText,
@@ -12,13 +14,31 @@ import {
   AlertCircle,
   Play,
   Eye,
+  Trash2,
+  RotateCcw,
+  Download,
+  Loader2,
+  Brain,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { toast } from "sonner";
 import { api } from "@/lib/api";
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 interface ClaimDetailProps {
   claimId: number;
@@ -45,6 +65,11 @@ const countryFlags: Record<string, string> = {
 export function ClaimDetail({ claimId }: ClaimDetailProps) {
   const t = useTranslations("claims");
   const tCommon = useTranslations("common");
+  const router = useRouter();
+  const queryClient = useQueryClient();
+
+  const [deleting, setDeleting] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const { data: claim, isLoading, error } = useQuery({
     queryKey: ["claim", claimId],
@@ -56,6 +81,34 @@ export function ClaimDetail({ claimId }: ClaimDetailProps) {
       return data;
     },
   });
+
+  const handleDelete = async () => {
+    try {
+      setDeleting(true);
+      const token = localStorage.getItem("auth_token");
+
+      const response = await fetch(`${API_URL}/api/v1/claims/${claimId}`, {
+        method: "DELETE",
+        credentials: "include",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to delete claim");
+      }
+
+      toast.success("Claim deleted");
+      queryClient.invalidateQueries({ queryKey: ["claims"] });
+      router.push("/claims");
+    } catch (err: any) {
+      toast.error(err.message);
+    } finally {
+      setDeleting(false);
+      setShowDeleteDialog(false);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -124,18 +177,28 @@ export function ClaimDetail({ claimId }: ClaimDetailProps) {
           )}
           {claim.status === "ANONYMIZATION_REVIEW" && (
             <Button asChild className="bg-amber-600 hover:bg-amber-700">
-              <Link href={`/claims/${claimId}/anonymization`}>
+              <Link href={`/claims/${claimId}/anon`}>
                 <Eye className="mr-2 h-4 w-4" />
                 {t("anonymizationReview")}
               </Link>
             </Button>
           )}
-          {claim.status === "READY_FOR_ANALYSIS" && (
-            <Button className="bg-emerald-600 hover:bg-emerald-700">
-              <Play className="mr-2 h-4 w-4" />
-              {t("startAnalysis")}
+          {(claim.status === "READY_FOR_ANALYSIS" || claim.status === "ANALYZED" || claim.status === "ANALYZING") && (
+            <Button asChild className="bg-emerald-600 hover:bg-emerald-700">
+              <Link href={`/claims/${claimId}/analysis`}>
+                <Brain className="mr-2 h-4 w-4" />
+                {claim.status === "ANALYZED" ? t("viewAnalysis") : t("startAnalysis")}
+              </Link>
             </Button>
           )}
+          <Button
+            variant="outline"
+            className="text-red-400 border-red-400 hover:bg-red-950/50"
+            onClick={() => setShowDeleteDialog(true)}
+          >
+            <Trash2 className="mr-2 h-4 w-4" />
+            {tCommon("delete")}
+          </Button>
         </div>
       </div>
 
@@ -231,6 +294,33 @@ export function ClaimDetail({ claimId }: ClaimDetailProps) {
           </CardContent>
         </Card>
       )}
+
+      {/* Delete Confirmation */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent className="bg-zinc-900 border-zinc-800">
+          <AlertDialogHeader>
+            <AlertDialogTitle>{tCommon("confirmDelete")}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("deleteWarning")}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{tCommon("cancel")}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              disabled={deleting}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {deleting ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Trash2 className="mr-2 h-4 w-4" />
+              )}
+              {tCommon("delete")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

@@ -12,6 +12,7 @@
     "filter": "Filter",
     "noData": "Žiadne dáta",
     "confirm": "Potvrdiť",
+    "confirmDelete": "Potvrdiť vymazanie",
     "back": "Späť",
     "next": "Ďalej",
     "previous": "Predchádzajúce"
@@ -22,7 +23,8 @@
     "rag": "Dokumentácia",
     "reports": "Reporty",
     "audit": "Audit log",
-    "settings": "Nastavenia"
+    "settings": "Nastavenia",
+    "users": "Používatelia"
   },
   "auth": {
     "signIn": "Prihlásiť sa",
@@ -38,7 +40,8 @@
     "haveAccount": "Už máte účet?",
     "createAccount": "Vytvoriť účet",
     "welcomeBack": "Vitajte späť",
-    "signInDescription": "Prihláste sa do svojho účtu"
+    "signInDescription": "Prihláste sa do svojho účtu",
+    "name": "Meno"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -64,11 +67,13 @@
     "analysis": "Analýza",
     "actions": "Akcie",
     "viewDetails": "Zobraziť detaily",
+    "viewAnalysis": "Zobraziť analýzu",
     "startAnalysis": "Spustiť analýzu",
     "approve": "Schváliť",
     "reject": "Zamietnuť",
     "ocrReview": "OCR kontrola",
     "anonymizationReview": "Kontrola anonymizácie",
+    "deleteWarning": "Ste si istí, že chcete vymazať túto poistnú udalosť? Táto akcia je nevratná a vymaže všetky súvisiace dokumenty.",
     "statuses": {
       "PROCESSING": "Spracováva sa",
       "OCR_REVIEW": "OCR kontrola",
@@ -117,6 +122,10 @@
       "sk": "Slovenčina",
       "en": "English"
     }
+  },
+  "admin": {
+    "title": "Administrácia",
+    "users": "Používatelia",
+    "userManagement": "Správa používateľov"
   }
 }
-

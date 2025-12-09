@@ -12,6 +12,7 @@
     "filter": "Filter",
     "noData": "No data",
     "confirm": "Confirm",
+    "confirmDelete": "Confirm Delete",
     "back": "Back",
     "next": "Next",
     "previous": "Previous"
@@ -22,7 +23,8 @@
     "rag": "Documentation",
     "reports": "Reports",
     "audit": "Audit Log",
-    "settings": "Settings"
+    "settings": "Settings",
+    "users": "Users"
   },
   "auth": {
     "signIn": "Sign In",
@@ -31,14 +33,15 @@
     "email": "Email",
     "password": "Password",
     "confirmPassword": "Confirm Password",
-    "forgotPassword": "Forgot Password?",
+    "forgotPassword": "Forgot password?",
     "orContinueWith": "or continue with",
     "google": "Google",
     "noAccount": "Don't have an account?",
     "haveAccount": "Already have an account?",
     "createAccount": "Create Account",
-    "welcomeBack": "Welcome Back",
-    "signInDescription": "Sign in to your account"
+    "welcomeBack": "Welcome back",
+    "signInDescription": "Sign in to your account",
+    "name": "Name"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -64,11 +67,13 @@
     "analysis": "Analysis",
     "actions": "Actions",
     "viewDetails": "View Details",
+    "viewAnalysis": "View Analysis",
     "startAnalysis": "Start Analysis",
     "approve": "Approve",
     "reject": "Reject",
     "ocrReview": "OCR Review",
     "anonymizationReview": "Anonymization Review",
+    "deleteWarning": "Are you sure you want to delete this claim? This action cannot be undone and will delete all associated documents.",
     "statuses": {
       "PROCESSING": "Processing",
       "OCR_REVIEW": "OCR Review",
@@ -114,9 +119,13 @@
     "account": "Account",
     "notifications": "Notifications",
     "languages": {
-      "sk": "Slovenčina",
+      "sk": "Slovak",
       "en": "English"
     }
+  },
+  "admin": {
+    "title": "Administration",
+    "users": "Users",
+    "userManagement": "User Management"
   }
 }
-

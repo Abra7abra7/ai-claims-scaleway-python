@@ -14,6 +14,7 @@ import {
   ChevronDown,
   Globe,
   Shield,
+  Users,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -33,8 +34,12 @@ const navigation = [
   { name: "claims", href: "/claims", icon: FileText },
   { name: "rag", href: "/rag", icon: FolderOpen },
   { name: "reports", href: "/reports", icon: FileBarChart },
-  { name: "audit", href: "/audit", icon: History },
+  { name: "audit", href: "/audit", icon: History, adminOnly: true },
   { name: "settings", href: "/settings", icon: Settings },
+];
+
+const adminNavigation = [
+  { name: "users", href: "/admin/users", icon: Users },
 ];
 
 export function Sidebar() {
@@ -66,6 +71,11 @@ export function Sidebar() {
       {/* Navigation */}
       <nav className="flex-1 space-y-1 px-3 py-4">
         {navigation.map((item) => {
+          // Skip admin-only items for non-admin users
+          if (item.adminOnly && session?.user?.role !== "admin") {
+            return null;
+          }
+
           const isActive = pathname === item.href || 
             (item.href !== "/" && pathname.startsWith(item.href));
           
@@ -85,6 +95,36 @@ export function Sidebar() {
             </Link>
           );
         })}
+
+        {/* Admin Section */}
+        {session?.user?.role === "admin" && (
+          <>
+            <div className="pt-4 pb-2">
+              <p className="px-3 text-xs font-semibold text-zinc-500 uppercase tracking-wider">
+                Admin
+              </p>
+            </div>
+            {adminNavigation.map((item) => {
+              const isActive = pathname.startsWith(item.href);
+              
+              return (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  className={cn(
+                    "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+                    isActive
+                      ? "bg-zinc-800 text-white"
+                      : "text-zinc-400 hover:bg-zinc-800/50 hover:text-white"
+                  )}
+                >
+                  <item.icon className="h-5 w-5" />
+                  {t(item.name)}
+                </Link>
+              );
+            })}
+          </>
+        )}
       </nav>
 
       {/* Language Switcher */}
