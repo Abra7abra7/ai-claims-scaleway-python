@@ -169,7 +169,7 @@ class CleanerService:
         
         return text
     
-    def get_cleaning_stats(self, original: str, cleaned: str) -> Dict[str, int]:
+    def get_cleaning_stats(self, original: str, cleaned: str) -> Dict:
         """
         Get statistics about the cleaning process.
         
@@ -178,12 +178,22 @@ class CleanerService:
             cleaned: Cleaned text
             
         Returns:
-            Dictionary with cleaning statistics
+            Dictionary with cleaning statistics including reduction percentage
         """
+        original_len = len(original)
+        cleaned_len = len(cleaned)
+        
+        # Calculate reduction percentage
+        if original_len > 0:
+            reduction_percent = round((1 - cleaned_len / original_len) * 100, 1)
+        else:
+            reduction_percent = 0.0
+        
         return {
-            "original_length": len(original),
-            "cleaned_length": len(cleaned),
-            "characters_removed": len(original) - len(cleaned),
+            "original_length": original_len,
+            "cleaned_length": cleaned_len,
+            "characters_removed": original_len - cleaned_len,
+            "reduction_percent": reduction_percent,
             "original_lines": original.count('\n') + 1,
             "cleaned_lines": cleaned.count('\n') + 1,
         }
