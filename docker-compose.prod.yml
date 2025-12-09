@@ -3,6 +3,7 @@ services:
     restart: always
     environment:
       - ENVIRONMENT=production
+      - FRONTEND_URL=https://ai-claims.novis.eu
     deploy:
       resources:
         limits:
@@ -19,6 +20,9 @@ services:
 
   frontend:
     restart: always
+    environment:
+      # Override API URL for production
+      - NEXT_PUBLIC_API_URL=https://ai-claims.novis.eu
     deploy:
       resources:
         limits:

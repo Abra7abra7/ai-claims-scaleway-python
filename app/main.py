@@ -67,13 +67,25 @@ All endpoints are versioned under `/api/v1/`.
     lifespan=lifespan
 )
 
-# CORS Middleware
+# CORS Middleware - Production configuration
+# Allow credentials requires specific origins (not wildcard)
+allowed_origins = [
+    "https://ai-claims.novis.eu",  # Production frontend
+    "http://localhost:3000",        # Local development
+    "http://localhost:8501",        # Legacy Streamlit (if still needed)
+]
+
+# Add FRONTEND_URL from settings if available
+if hasattr(settings, 'FRONTEND_URL') and settings.FRONTEND_URL:
+    allowed_origins.append(settings.FRONTEND_URL)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Configure for production
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"],
 )
 
 # Include API v1 router
