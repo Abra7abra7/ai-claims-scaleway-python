@@ -659,6 +659,87 @@ npm run generate-types
 # 5. Typy sa auto-vygenerujú aj pri git commit (pre-commit hook)
 ```
 
+### Prístup k Službám (Development & Production)
+
+#### 🗄️ Database (PostgreSQL)
+
+**Lokálne:**
+```bash
+# Priamy prístup cez psql
+docker-compose exec db psql -U claims_user -d claims_db
+
+# SQL queries
+SELECT * FROM users;
+SELECT * FROM claims ORDER BY created_at DESC LIMIT 10;
+SELECT * FROM audit_logs WHERE action LIKE 'LOGIN%';
+
+# Backup databázy
+docker-compose exec db pg_dump -U claims_user claims_db > backup_$(date +%Y%m%d).sql
+```
+
+**Produkcia (IBM Server):**
+```bash
+# SSH do servera
+ssh user@10.85.55.26
+
+# Pripojenie k DB
+docker-compose exec db psql -U claims_user -d claims_db
+```
+
+**Connection String:**
+```
+postgresql://claims_user:claims_password@localhost:5432/claims_db  # Lokálne
+postgresql://claims_user:claims_password@10.85.55.26:5432/claims_db  # Production (ak exposed)
+```
+
+#### 📦 Storage (MinIO / S3)
+
+**MinIO Console (Lokálne):**
+- URL: http://localhost:9001
+- Username: `minioadmin`
+- Password: `minioadmin123`
+- Bucket: `ai-claims`
+
+**Produkcia:**
+- MinIO Console: http://10.85.55.26:9001 (ak exposed)
+- Alebo cez `docker-compose exec` príkazy
+
+**Štruktúra dokumentov v buckete:**
+```
+ai-claims/
+├── claims/{claim_id}/
+│   ├── original/       # Nahraté PDF
+│   ├── processed/      # Po OCR/cleaning
+│   └── reports/        # Vygenerované reporty
+└── rag/
+    └── {country}/{type}/  # Policy dokumenty (SK/general/, SK/health/, atď.)
+```
+
+#### 📖 API Dokumentácia (Swagger / OpenAPI)
+
+**Lokálne:**
+- **Swagger UI:** http://localhost:8000/api/v1/docs
+- **ReDoc:** http://localhost:8000/api/v1/redoc
+- **OpenAPI JSON:** http://localhost:8000/api/v1/openapi.json
+
+**Produkcia:**
+- **URL:** https://ai-claims.novis.eu/api/v1/docs
+- **Poznámka:** ⚠️ Ak dostávaš "Bad Gateway" na produkcii, skontroluj:
+  1. Backend beží: `docker-compose ps backend`
+  2. Backend loguje správne: `docker-compose logs backend`
+  3. Reverse proxy (nginx/traefik) je nakonfigurovaný pre `/api/v1/*` routes
+  4. CORS povoľuje `https://ai-claims.novis.eu`
+
+**Typová generácia z API:**
+```bash
+# Lokálne
+cd frontend
+npm run generate-types
+
+# Z production API
+npx openapi-typescript https://ai-claims.novis.eu/api/v1/openapi.json -o src/lib/api-types.ts
+```
+
 ### Užitočné Príkazy
 
 ```bash
@@ -758,6 +839,48 @@ docker-compose exec backend python scripts/init_admin.py
 - **Cez API:** POST `/api/v1/auth/register`
 - **Admin panel:** `/admin/users` (enable/disable users)
 
+#### Priama práca s užívateľmi v databáze
+
+**Zobraziť všetkých userov:**
+```sql
+docker-compose exec db psql -U claims_user -d claims_db -c "
+SELECT id, email, name, role, is_active, email_verified, created_at 
+FROM users 
+ORDER BY created_at DESC;
+"
+```
+
+**Zmeniť rolu usera na ADMIN:**
+```sql
+docker-compose exec db psql -U claims_user -d claims_db -c "
+UPDATE users SET role = 'admin' WHERE email = 'user@example.com';
+"
+```
+
+**Manuálne verifikovať email:**
+```sql
+docker-compose exec db psql -U claims_user -d claims_db -c "
+UPDATE users SET email_verified = TRUE WHERE email = 'user@example.com';
+"
+```
+
+**Disablovať účet:**
+```sql
+docker-compose exec db psql -U claims_user -d claims_db -c "
+UPDATE users SET is_active = FALSE WHERE email = 'user@example.com';
+"
+```
+
+**Zobraziť aktívne sessions usera:**
+```sql
+docker-compose exec db psql -U claims_user -d claims_db -c "
+SELECT s.id, s.ip_address, s.user_agent, s.created_at, s.last_activity_at
+FROM user_sessions s
+JOIN users u ON s.user_id = u.id
+WHERE u.email = 'user@example.com' AND s.is_revoked = FALSE;
+"
+```
+
 #### Reset hesla pre usera
 1. User klikne "Forgot password?"
 2. Zadá email
@@ -768,6 +891,7 @@ docker-compose exec backend python scripts/init_admin.py
 #### Revokovať sessions
 - **User:** Settings → Sessions → Revoke
 - **Admin:** Admin → Users → View sessions → Revoke
+- **Databázou:** `UPDATE user_sessions SET is_revoked = TRUE WHERE user_id = X;`
 
 ### Database Migrácie
 
