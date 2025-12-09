@@ -13,7 +13,7 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
+# lib/  # Commented out - was ignoring frontend/src/lib too!
 lib64/
 parts/
 sdist/
@@ -22,6 +22,10 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+
+# Python lib directories only
+**/venv/lib/
+**/env/lib/
 
 # Node
 node_modules/
