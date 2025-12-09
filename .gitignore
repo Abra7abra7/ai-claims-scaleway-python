@@ -4,6 +4,9 @@ __pycache__/
 *$py.class
 *.so
 .Python
+env/
+venv/
+ENV/
 build/
 develop-eggs/
 dist/
@@ -20,54 +23,40 @@ wheels/
 .installed.cfg
 *.egg
 
-# Virtual Environment
-venv/
-ENV/
-env/
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
 
-# IDE
+# Next.js
+.next/
+out/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDEs
 .vscode/
 .idea/
 *.swp
 *.swo
 *~
 
-# Environment variables
-.env
-.env.*
-*.bak
-
-# Docker
-*.log
-
 # OS
 .DS_Store
 Thumbs.db
 
-# Database
-*.db
-*.sqlite3
-
-# Temporary files
-tmp/
-temp/
-*.tmp
-
-# Logs
-logs/
+# Docker
 *.log
 
-# Test coverage
-.coverage
-htmlcov/
-.pytest_cache/
+# Local data
+data/
+logs/
 
-# Jupyter Notebook
-.ipynb_checkpoints
-
-# Celery
-celerybeat-schedule
-celerybeat.pid
-
-# pgvector
-*.pgvector
+# Backups
+*.sql
+*.dump

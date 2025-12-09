@@ -1,0 +1,20 @@
+{
+  "name": "ai-claims-scaleway-python",
+  "version": "1.0.0",
+  "private": true,
+  "description": "AI Claims Processing System",
+  "scripts": {
+    "prepare": "husky install",
+    "generate-types": "cd frontend && npm run generate-types",
+    "check-backend": "curl -s http://localhost:8000/api/v1/health > /dev/null && echo 'Backend is running' || echo 'Backend not running'",
+    "pre-commit-hook": "node scripts/pre-commit-types.js"
+  },
+  "devDependencies": {
+    "husky": "^8.0.3"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Abra7abra7/ai-claims-scaleway-python.git"
+  }
+}
+
