@@ -10,16 +10,15 @@ export default getRequestConfig(async () => {
   const cookieStore = await cookies();
   const localeCookie = cookieStore.get('locale')?.value as Locale | undefined;
   
-  // Fallback to Accept-Language header
   let locale: Locale = defaultLocale;
   
   if (localeCookie && locales.includes(localeCookie)) {
     locale = localeCookie;
   } else {
+    // Fallback to Accept-Language header
     const headersList = await headers();
     const acceptLanguage = headersList.get('Accept-Language') || '';
     
-    // Parse Accept-Language header
     if (acceptLanguage.includes('en')) {
       locale = 'en';
     } else if (acceptLanguage.includes('sk')) {
@@ -32,4 +31,3 @@ export default getRequestConfig(async () => {
     messages: (await import(`../messages/${locale}.json`)).default,
   };
 });
-
