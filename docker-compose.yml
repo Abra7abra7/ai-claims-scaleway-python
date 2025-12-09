@@ -108,20 +108,22 @@ services:
       - ./app:/app/app
     command: celery -A app.worker.celery_app worker --loglevel=info
 
-  # ==================== FRONTEND ====================
+  # ==================== FRONTEND (Next.js) ====================
   frontend:
     build:
-      context: .
-      dockerfile: Dockerfile.frontend
+      context: ./frontend
+      dockerfile: Dockerfile
     ports:
-      - "8501:8501"
+      - "3000:3000"
     environment:
-      - BACKEND_URL=http://backend:8000
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
     depends_on:
       - backend
     volumes:
-      - ./frontend:/app/frontend
-    command: streamlit run frontend/app.py
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.next
+    restart: unless-stopped
 
   # ==================== REDIS ====================
   redis:

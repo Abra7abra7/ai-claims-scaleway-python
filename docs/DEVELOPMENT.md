@@ -119,8 +119,13 @@ ai-claims-scaleway-python/
 │   ├── worker.py              # Celery tasks
 │   └── prompts.py             # (deprecated - now in config/settings.yaml)
 │
-├── frontend/
-│   └── app.py                 # Streamlit UI
+├── frontend/                  # Next.js Frontend
+│   ├── src/                   # Source code
+│   │   ├── app/               # Next.js App Router
+│   │   ├── components/        # React components
+│   │   └── lib/               # Utilities & API types
+│   ├── package.json           # Dependencies
+│   └── Dockerfile             # Docker build
 │
 ├── presidio-api/              # Samostatná Presidio služba
 │   ├── app.py                 # FastAPI wrapper pre Presidio
@@ -224,24 +229,26 @@ Po zmene:
 docker compose restart worker
 ```
 
-#### 3. **Frontend UI** (`frontend/app.py`)
+#### 3. **Frontend UI** (`frontend/src/app/`)
 
-Pridanie novej stránky:
+Pridanie novej stránky (Next.js App Router):
 
-```python
-def my_new_page():
-    st.title("Moja Nová Stránka")
-    # Your Streamlit code here
-
-# V main()
-pages = {
-    "Moja Stránka": my_new_page,
-    # ... existing pages
+```typescript
+// frontend/src/app/my-page/page.tsx
+export default function MyPage() {
+  return (
+    <div>
+      <h1>Moja Nová Stránka</h1>
+      {/* Your React components here */}
+    </div>
+  );
 }
 ```
 
-Po zmene:
+Po zmene (hot reload v dev móde):
 ```bash
+# Zmeny sa automaticky prejavia v dev móde
+# Pre produkčný build:
 docker compose restart frontend
 ```
 

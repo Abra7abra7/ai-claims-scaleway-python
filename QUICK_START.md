@@ -26,10 +26,11 @@ docker compose up -d
 ```
 
 ### Prístupové URL
-- **Frontend**: http://localhost:8501
+- **Frontend (Next.js)**: http://localhost:3000
 - **Backend API**: http://localhost:8000
+- **API Docs (Swagger)**: http://localhost:8000/api/v1/docs
 - **Presidio API**: http://localhost:8001
-- **Redis**: localhost:6379
+- **MinIO Console**: http://localhost:9001
 
 ### Užitočné príkazy
 
@@ -124,8 +125,8 @@ nano .env
 
 ```
 ┌─────────────┐
-│  Frontend   │ :8501 (Streamlit)
-│  (Streamlit)│
+│  Frontend   │ :3000 (Next.js)
+│  (Next.js)  │
 └──────┬──────┘
        │
        ↓
@@ -145,7 +146,7 @@ nano .env
        └───┬────┘
            │
            ├─→ Presidio API :8001
-           ├─→ Mistral AI API
+           ├─→ Mistral/Gemini AI API
            └─→ PostgreSQL
 ```
 

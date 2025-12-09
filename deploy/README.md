@@ -10,7 +10,7 @@ Internet
 Scaleway Instance (Public IP)
     ↓
 Docker Compose Stack:
-- Frontend (Streamlit) :8501
+- Frontend (Next.js) :3000
 - Backend (FastAPI) :8000
 - Worker (Celery)
 - Redis :6379
@@ -53,8 +53,8 @@ Pred nasadením potrebuješ:
 ```
 Inbound Rules:
   - SSH (TCP 22) - Len tvoja IP adresa
-  - HTTP (TCP 8501) - 0.0.0.0/0 (Streamlit Frontend)
-  - API (TCP 8000) - 0.0.0.0/0 (Optional - FastAPI Backend)
+  - HTTP (TCP 3000) - 0.0.0.0/0 (Next.js Frontend)
+  - API (TCP 8000) - 0.0.0.0/0 (FastAPI Backend / API Docs)
 
 Outbound Rules:
   - Allow all (default)
@@ -367,7 +367,7 @@ apt-get install -y ufw
 ufw default deny incoming
 ufw default allow outgoing
 ufw allow from YOUR_IP to any port 22  # SSH len z tvojej IP
-ufw allow 8501  # Streamlit Frontend
+ufw allow 3000  # Next.js Frontend
 ufw allow 8000  # FastAPI Backend (optional)
 
 # Enable

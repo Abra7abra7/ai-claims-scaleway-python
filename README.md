@@ -19,8 +19,8 @@ Inteligentný systém na spracovanie poistných udalostí s využitím AI, OCR, 
 ```
 ┌─────────────┐         ┌──────────────┐
 │   Frontend  │────────▶│   Backend    │
-│ (Streamlit) │         │  (FastAPI)   │
-│ :8501       │         │  :8000       │
+│  (Next.js)  │         │  (FastAPI)   │
+│   :3000     │         │  :8000       │
 └─────────────┘         └──────┬───────┘
                                │
                 ┌──────────────┼───────────────┐
@@ -57,8 +57,8 @@ cp .env.example .env
 docker compose up -d
 
 # 4. Otvor v prehliadači
-# Frontend: http://localhost:8501
-# Backend API: http://localhost:8000
+# Frontend: http://localhost:3000
+# API Docs: http://localhost:8000/api/v1/docs
 ```
 
 Detailný návod: [QUICK_START.md](QUICK_START.md)
@@ -92,7 +92,7 @@ Kompletný guide: [deploy/README.md](deploy/README.md)
 ## 🛠️ Tech Stack
 
 **Backend:** FastAPI, SQLAlchemy, Celery, Pydantic  
-**Frontend:** Streamlit  
+**Frontend:** Next.js 16, React 19, TailwindCSS, shadcn/ui  
 **AI & ML:** Mistral AI, Google Gemini, OpenAI (modulárna podpora), Microsoft Presidio, pgvector  
 **Infrastructure:** Docker, PostgreSQL, Redis, S3  
 **Cloud:** Scaleway (Managed PostgreSQL, Object Storage, Compute)
