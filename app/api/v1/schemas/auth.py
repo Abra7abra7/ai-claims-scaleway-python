@@ -35,6 +35,27 @@ class SessionRevokeRequest(BaseModel):
     reason: Optional[str] = "admin_revoked"
 
 
+class PasswordResetRequest(BaseModel):
+    """Request to reset password."""
+    email: EmailStr
+
+
+class PasswordResetConfirm(BaseModel):
+    """Confirm password reset with token and new password."""
+    token: str = Field(..., min_length=32, description="Password reset token from email")
+    new_password: str = Field(..., min_length=8, description="New password (min 8 characters)")
+
+
+class EmailVerificationRequest(BaseModel):
+    """Request to send email verification."""
+    email: EmailStr
+
+
+class EmailVerificationConfirm(BaseModel):
+    """Confirm email verification with token."""
+    token: str = Field(..., min_length=32, description="Email verification token from email")
+
+
 # ============ Response Schemas ============
 
 class UserResponse(BaseModel):

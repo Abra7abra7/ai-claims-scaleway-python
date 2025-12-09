@@ -73,6 +73,12 @@ export type HealthResponse = components["schemas"]["HealthResponse"];
 export type MessageResponse = components["schemas"]["app__api__v1__schemas__base__MessageResponse"];
 export type Country = components["schemas"]["Country"];
 
+// ==================== Password Reset & Email Verification ====================
+export type PasswordResetRequest = components["schemas"]["PasswordResetRequest"];
+export type PasswordResetConfirm = components["schemas"]["PasswordResetConfirm"];
+export type EmailVerificationRequest = components["schemas"]["EmailVerificationRequest"];
+export type EmailVerificationConfirm = components["schemas"]["EmailVerificationConfirm"];
+
 // ==================== Operations (for API client) ====================
 export type Operations = operations;
 

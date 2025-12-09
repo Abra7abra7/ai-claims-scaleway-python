@@ -9,12 +9,18 @@ from typing import Optional
 
 from app.db.session import get_db
 from app.services.auth import auth_service
+from app.services.email_service import get_email_service
+from app.services.token_service import get_token_service, TokenType
 from app.db.models import User, UserRole
 from app.api.v1.schemas.auth import (
     UserRegisterRequest,
     UserLoginRequest,
     PasswordChangeRequest,
     SessionRevokeRequest,
+    PasswordResetRequest,
+    PasswordResetConfirm,
+    EmailVerificationRequest,
+    EmailVerificationConfirm,
     UserResponse,
     SessionResponse,
     LoginResponse,
@@ -436,4 +442,266 @@ async def admin_revoke_session(
         )
     
     return MessageResponse(message="Session revoked by admin")
+
+
+# ==================== Password Reset ====================
+
+@router.post(
+    "/password-reset/request",
+    response_model=MessageResponse,
+    summary="Request password reset",
+    description="Send password reset email to user"
+)
+async def request_password_reset(
+    data: PasswordResetRequest,
+    request: Request,
+    db: Session = Depends(get_db)
+):
+    """
+    Request password reset email.
+    
+    - Checks if user exists
+    - Generates reset token
+    - Sends email with reset link
+    - Returns success even if email not found (security)
+    """
+    email_service = get_email_service()
+    token_service = get_token_service()
+    
+    # Check if user exists
+    user = db.query(User).filter(User.email == data.email).first()
+    
+    if user:
+        # Generate reset token
+        reset_token = token_service.create_password_reset_token(
+            email=data.email,
+            db=db,
+            expires_in_hours=1
+        )
+        
+        # Send email
+        email_service.send_password_reset_email(
+            to_email=data.email,
+            reset_token=reset_token,
+            user_name=user.name
+        )
+        
+        # Log audit
+        from app.services.audit import AuditLogger
+        audit = AuditLogger()
+        audit.log(
+            db=db,
+            user=data.email,
+            action="PASSWORD_RESET_REQUESTED",
+            entity_type="User",
+            entity_id=user.id,
+            changes={"ip_address": request.client.host if request.client else None}
+        )
+    
+    # Always return success (don't reveal if email exists)
+    return MessageResponse(
+        message="If the email exists, a password reset link has been sent"
+    )
+
+
+@router.post(
+    "/password-reset/confirm",
+    response_model=MessageResponse,
+    summary="Confirm password reset",
+    description="Reset password using token from email"
+)
+async def confirm_password_reset(
+    data: PasswordResetConfirm,
+    request: Request,
+    db: Session = Depends(get_db)
+):
+    """
+    Confirm password reset with token.
+    
+    - Validates reset token
+    - Updates user password
+    - Revokes all user sessions (for security)
+    - Returns success/error
+    """
+    token_service = get_token_service()
+    
+    # Verify token
+    is_valid, email = token_service.verify_token(
+        token=data.token,
+        token_type=TokenType.PASSWORD_RESET,
+        db=db
+    )
+    
+    if not is_valid or not email:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid or expired reset token"
+        )
+    
+    # Get user
+    user = db.query(User).filter(User.email == email).first()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+    
+    # Update password
+    success = auth_service.change_password(
+        db=db,
+        user_id=user.id,
+        new_password=data.new_password,
+        request=request
+    )
+    
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to reset password"
+        )
+    
+    # Revoke all sessions (force re-login with new password)
+    auth_service.revoke_all_user_sessions(
+        db=db,
+        user_id=user.id,
+        reason="password_reset",
+        request=request
+    )
+    
+    # Log audit
+    from app.services.audit import AuditLogger
+    audit = AuditLogger()
+    audit.log(
+        db=db,
+        user=email,
+        action="PASSWORD_RESET_COMPLETED",
+        entity_type="User",
+        entity_id=user.id,
+        changes={"ip_address": request.client.host if request.client else None}
+    )
+    
+    return MessageResponse(message="Password reset successfully")
+
+
+# ==================== Email Verification ====================
+
+@router.post(
+    "/verify-email/send",
+    response_model=MessageResponse,
+    summary="Send email verification",
+    description="Send verification email to user"
+)
+async def send_verification_email(
+    data: EmailVerificationRequest,
+    request: Request,
+    db: Session = Depends(get_db)
+):
+    """
+    Send email verification link.
+    
+    - Checks if user exists and is not verified
+    - Generates verification token
+    - Sends email with verification link
+    """
+    email_service = get_email_service()
+    token_service = get_token_service()
+    
+    # Get user
+    user = db.query(User).filter(User.email == data.email).first()
+    
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+    
+    if user.email_verified:
+        return MessageResponse(message="Email already verified")
+    
+    # Generate verification token
+    verification_token = token_service.create_email_verification_token(
+        email=data.email,
+        db=db,
+        expires_in_hours=24
+    )
+    
+    # Send email
+    email_service.send_verification_email(
+        to_email=data.email,
+        verification_token=verification_token,
+        user_name=user.name
+    )
+    
+    # Log audit
+    from app.services.audit import AuditLogger
+    audit = AuditLogger()
+    audit.log(
+        db=db,
+        user=data.email,
+        action="EMAIL_VERIFICATION_SENT",
+        entity_type="User",
+        entity_id=user.id
+    )
+    
+    return MessageResponse(message="Verification email sent")
+
+
+@router.get(
+    "/verify-email/{token}",
+    response_model=MessageResponse,
+    summary="Verify email",
+    description="Verify user email with token"
+)
+async def verify_email(
+    token: str,
+    request: Request,
+    db: Session = Depends(get_db)
+):
+    """
+    Verify user email with token.
+    
+    - Validates verification token
+    - Marks email as verified
+    - Returns success/error
+    """
+    token_service = get_token_service()
+    
+    # Verify token
+    is_valid, email = token_service.verify_token(
+        token=token,
+        token_type=TokenType.EMAIL_VERIFICATION,
+        db=db
+    )
+    
+    if not is_valid or not email:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid or expired verification token"
+        )
+    
+    # Get user
+    user = db.query(User).filter(User.email == email).first()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+    
+    # Mark as verified
+    user.email_verified = True
+    db.commit()
+    
+    # Log audit
+    from app.services.audit import AuditLogger
+    audit = AuditLogger()
+    audit.log(
+        db=db,
+        user=email,
+        action="EMAIL_VERIFIED",
+        entity_type="User",
+        entity_id=user.id,
+        changes={"ip_address": request.client.host if request.client else None}
+    )
+    
+    return MessageResponse(message="Email verified successfully")
 
