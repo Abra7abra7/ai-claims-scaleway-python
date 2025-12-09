@@ -85,7 +85,8 @@
     "recentActivity": "Recent Activity",
     "quickStats": "Quick Stats",
     "byStatus": "By Status",
-    "byCountry": "By Country"
+    "byCountry": "By Country",
+    "needsAttention": "Needs Attention"
   },
   "claims": {
     "title": "Claims",

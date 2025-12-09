@@ -2,15 +2,20 @@
 
 import { useTranslations } from "next-intl";
 import { useQuery } from "@tanstack/react-query";
+import Link from "next/link";
 import {
   FileText,
   Clock,
   CheckCircle,
   AlertCircle,
   TrendingUp,
+  Eye,
+  ArrowRight,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { api } from "@/lib/api";
 
 interface StatCardProps {
@@ -103,6 +108,29 @@ export function DashboardContent() {
     },
   });
 
+  // Fetch claims that need attention
+  const { data: claimsList } = useQuery({
+    queryKey: ["claims", "needs-attention"],
+    queryFn: async () => {
+      const { data, error } = await api.GET("/api/v1/claims", {
+        params: {
+          query: {
+            limit: 10,
+          },
+        },
+      });
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const needsAttentionClaims = claimsList?.items?.filter(
+    (claim) =>
+      claim.status === "OCR_REVIEW" ||
+      claim.status === "ANONYMIZATION_REVIEW" ||
+      claim.status === "FAILED"
+  ) || [];
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -147,6 +175,47 @@ export function DashboardContent() {
           </>
         )}
       </div>
+
+      {/* Needs Attention */}
+      {needsAttentionClaims.length > 0 && (
+        <Card className="border-amber-500/20 bg-amber-500/5">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-amber-400 flex items-center gap-2">
+                <AlertCircle className="h-5 w-5" />
+                {t("needsAttention")}
+              </CardTitle>
+              <Badge variant="outline" className="bg-amber-500/10 text-amber-400 border-amber-500/20">
+                {needsAttentionClaims.length}
+              </Badge>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {needsAttentionClaims.map((claim) => (
+              <Link
+                key={claim.id}
+                href={`/claims/${claim.id}`}
+                className="flex items-center justify-between rounded-lg border border-zinc-800 bg-zinc-900 p-4 transition-colors hover:bg-zinc-800"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-500/10">
+                    <Eye className="h-5 w-5 text-amber-400" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-white">
+                      Claim #{claim.id}
+                    </p>
+                    <p className="text-sm text-zinc-500">
+                      {claim.status.replace(/_/g, " ")}
+                    </p>
+                  </div>
+                </div>
+                <ArrowRight className="h-5 w-5 text-zinc-500" />
+              </Link>
+            ))}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Status Overview */}
       <div className="grid gap-6 lg:grid-cols-2">

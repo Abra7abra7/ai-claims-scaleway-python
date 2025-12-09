@@ -85,7 +85,8 @@
     "recentActivity": "Nedávna aktivita",
     "quickStats": "Rýchle štatistiky",
     "byStatus": "Podľa stavu",
-    "byCountry": "Podľa krajiny"
+    "byCountry": "Podľa krajiny",
+    "needsAttention": "Vyžaduje pozornosť"
   },
   "claims": {
     "title": "Poistné udalosti",

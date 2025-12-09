@@ -37,6 +37,11 @@ import {
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
+import { WorkflowProgress } from "./workflow-progress";
+import { ActivityTimeline } from "./activity-timeline";
+import { QuickActions } from "./quick-actions";
+import { DocumentPreview } from "./document-preview";
+import { useClaimPolling } from "@/hooks/use-claim-polling";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -70,8 +75,12 @@ export function ClaimDetail({ claimId }: ClaimDetailProps) {
 
   const [deleting, setDeleting] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [previewDocument, setPreviewDocument] = useState<any | null>(null);
 
-  const { data: claim, isLoading, error } = useQuery({
+  // Use polling hook for real-time updates
+  const { claim, isPolling } = useClaimPolling({ claimId });
+  
+  const { isLoading, error } = useQuery({
     queryKey: ["claim", claimId],
     queryFn: async () => {
       const { data, error } = await api.GET("/api/v1/claims/{claim_id}", {
@@ -163,6 +172,15 @@ export function ClaimDetail({ claimId }: ClaimDetailProps) {
               <Badge variant="outline" className={statusColors[claim.status] || ""}>
                 {t(`statuses.${claim.status}` as any) || claim.status}
               </Badge>
+              {isPolling && (
+                <>
+                  <Separator orientation="vertical" className="h-4 bg-zinc-700" />
+                  <div className="flex items-center gap-1 text-xs text-blue-400">
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                    <span>Auto-updating...</span>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -202,8 +220,15 @@ export function ClaimDetail({ claimId }: ClaimDetailProps) {
         </div>
       </div>
 
-      {/* Info Cards */}
-      <div className="grid gap-4 md:grid-cols-3">
+      {/* Workflow Progress */}
+      <WorkflowProgress currentStatus={claim.status} />
+
+      {/* Main Content Grid */}
+      <div className="grid gap-6 lg:grid-cols-3">
+        {/* Left Column - Claim Details */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Info Cards */}
+          <div className="grid gap-4 md:grid-cols-3">
         <Card className="border-zinc-800 bg-zinc-900">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-zinc-400">
@@ -271,7 +296,11 @@ export function ClaimDetail({ claimId }: ClaimDetailProps) {
                   </p>
                 </div>
               </div>
-              <Button variant="ghost" size="sm">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setPreviewDocument(doc)}
+              >
                 <Eye className="h-4 w-4" />
               </Button>
             </div>
@@ -279,20 +308,38 @@ export function ClaimDetail({ claimId }: ClaimDetailProps) {
         </CardContent>
       </Card>
 
-      {/* Analysis Result */}
-      {claim.analysis_result && (
-        <Card className="border-zinc-800 bg-zinc-900">
-          <CardHeader>
-            <CardTitle className="text-white">{t("analysis")}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <pre className="rounded-lg bg-zinc-800 p-4 text-sm text-zinc-300 overflow-auto">
-              {typeof claim.analysis_result === "string"
-                ? claim.analysis_result
-                : JSON.stringify(claim.analysis_result, null, 2)}
-            </pre>
-          </CardContent>
-        </Card>
+          {/* Analysis Result */}
+          {claim.analysis_result && (
+            <Card className="border-zinc-800 bg-zinc-900">
+              <CardHeader>
+                <CardTitle className="text-white">{t("analysis")}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <pre className="rounded-lg bg-zinc-800 p-4 text-sm text-zinc-300 overflow-auto">
+                  {typeof claim.analysis_result === "string"
+                    ? claim.analysis_result
+                    : JSON.stringify(claim.analysis_result, null, 2)}
+                </pre>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+
+        {/* Right Column - Activity Timeline & Quick Actions */}
+        <div className="lg:col-span-1 space-y-6">
+          <QuickActions claimId={claimId} currentStatus={claim.status} />
+          <ActivityTimeline claimId={claimId} />
+        </div>
+      </div>
+
+      {/* Document Preview Modal */}
+      {previewDocument && (
+        <DocumentPreview
+          document={previewDocument}
+          analysisResult={claim.analysis_result}
+          open={!!previewDocument}
+          onOpenChange={(open) => !open && setPreviewDocument(null)}
+        />
       )}
 
       {/* Delete Confirmation */}
