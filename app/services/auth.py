@@ -406,6 +406,10 @@ class AuthService:
             
             # Update password
             user.password_hash = hash_password(new_password)
+            
+            # Auto-verify email (user proved ownership via email token)
+            user.email_verified = True
+            
             db.commit()
             
             # Log successful password reset
@@ -415,7 +419,10 @@ class AuthService:
                 user_email=user.email,
                 user_id=user.id,
                 request=request,
-                details={"reset_via": "email_token"}
+                details={
+                    "reset_via": "email_token",
+                    "email_auto_verified": True
+                }
             )
             
             return True
