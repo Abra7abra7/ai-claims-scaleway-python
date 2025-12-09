@@ -259,7 +259,7 @@ export function ClaimsList() {
                         )}
                         {claim.status === "ANONYMIZATION_REVIEW" && (
                           <DropdownMenuItem asChild>
-                            <Link href={`/claims/${claim.id}/anonymization`}>
+                            <Link href={`/claims/${claim.id}/anon`}>
                               {t("anonymizationReview")}
                             </Link>
                           </DropdownMenuItem>
