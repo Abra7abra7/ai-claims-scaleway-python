@@ -590,10 +590,10 @@ async def confirm_password_reset(
             detail="User not found"
         )
     
-    # Update password
-    success = auth_service.change_password(
+    # Reset password (without requiring old password)
+    success = auth_service.reset_password(
         db=db,
-        user_id=user.id,
+        user=user,
         new_password=data.new_password,
         request=request
     )
@@ -610,18 +610,6 @@ async def confirm_password_reset(
         user_id=user.id,
         reason="password_reset",
         request=request
-    )
-    
-    # Log audit
-    from app.services.audit import AuditLogger
-    audit = AuditLogger()
-    audit.log(
-        db=db,
-        user=email,
-        action="PASSWORD_RESET_COMPLETED",
-        entity_type="User",
-        entity_id=user.id,
-        changes={"ip_address": request.client.host if request.client else None}
     )
     
     return MessageResponse(message="Password reset successfully")

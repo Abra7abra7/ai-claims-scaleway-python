@@ -385,6 +385,45 @@ class AuthService:
         
         return count
     
+    def reset_password(
+        self,
+        db: Session,
+        user: User,
+        new_password: str,
+        request: Optional[Request] = None
+    ) -> bool:
+        """
+        Reset user password without requiring old password.
+        Used for password reset flow via email token.
+        
+        Returns:
+            True if password was reset successfully, False otherwise.
+        """
+        try:
+            # Validate new password
+            if len(new_password) < 8:
+                return False
+            
+            # Update password
+            user.password_hash = hash_password(new_password)
+            db.commit()
+            
+            # Log successful password reset
+            self._log_auth_action(
+                db=db,
+                action="PASSWORD_RESET_COMPLETED",
+                user_email=user.email,
+                user_id=user.id,
+                request=request,
+                details={"reset_via": "email_token"}
+            )
+            
+            return True
+        except Exception as e:
+            print(f"Failed to reset password: {e}")
+            db.rollback()
+            return False
+    
     def change_password(
         self,
         db: Session,
