@@ -35,6 +35,7 @@ def process_claim_ocr(document_id: int):
     """
     Step 1: OCR processing
     Extract text from document and set status to OCR_REVIEW
+    Uses base64 upload instead of presigned URLs for local MinIO compatibility.
     """
     db = SessionLocal()
     try:
@@ -44,11 +45,19 @@ def process_claim_ocr(document_id: int):
         if not document:
             return "Document not found"
 
-        # Generate Presigned URL for Mistral OCR
-        presigned_url = storage_service.generate_presigned_url(document.s3_key)
+        # Download file from MinIO as bytes
+        print(f"Downloading document {document_id} from S3: {document.s3_key}")
+        file_content = storage_service.download_bytes(document.s3_key)
+        print(f"Downloaded {len(file_content)} bytes, starting OCR...")
 
-        # OCR with Mistral
-        ocr_text = ocr_service.extract_text_from_url(presigned_url)
+        # OCR with Mistral using base64
+        ocr_text = ocr_service.extract_text(file_content, mime_type="application/pdf")
+        
+        if not ocr_text:
+            print(f"Warning: OCR returned empty text for document {document_id}")
+        else:
+            print(f"OCR successful, extracted {len(ocr_text)} characters")
+        
         document.original_text = ocr_text
         db.commit()
         
@@ -64,10 +73,14 @@ def process_claim_ocr(document_id: int):
             # All OCR done, move to OCR_REVIEW status
             claim.status = models.ClaimStatus.OCR_REVIEW.value
             db.commit()
+            print(f"Claim {claim.id} moved to OCR_REVIEW status")
 
         return f"OCR completed for document {document_id}"
     except Exception as e:
         print(f"Error in OCR processing for document {document_id}: {e}")
+        import traceback
+        traceback.print_exc()
+        
         # Mark claim as failed
         try:
             document = db.query(models.ClaimDocument).filter(

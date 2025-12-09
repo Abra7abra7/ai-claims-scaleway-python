@@ -1256,6 +1256,8 @@ export interface components {
             id: number;
             /** Country */
             country: string;
+            /** Contract Number */
+            contract_number?: string | null;
             status: components["schemas"]["ClaimStatus"];
             /** Created At */
             created_at?: string | null;
@@ -1325,6 +1327,8 @@ export interface components {
             id: number;
             /** Country */
             country: string;
+            /** Contract Number */
+            contract_number?: string | null;
             status: components["schemas"]["ClaimStatus"];
             /** Created At */
             created_at?: string | null;
@@ -2755,6 +2759,8 @@ export interface operations {
             query?: {
                 /** @description Country code */
                 country?: components["schemas"]["Country"];
+                /** @description Contract number for legacy system integration */
+                contract_number?: string | null;
             };
             header?: {
                 "X-User-Id"?: string | null;

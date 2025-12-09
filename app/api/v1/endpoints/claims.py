@@ -3,7 +3,7 @@ Claims CRUD endpoints.
 """
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Query, status
 from sqlalchemy.orm import Session
-from typing import List
+from typing import List, Optional
 
 from app.api.deps import (
     get_database,
@@ -128,6 +128,7 @@ def get_claim(
 async def upload_claim(
     files: List[UploadFile] = File(..., description="PDF documents to upload"),
     country: Country = Query(Country.SK, description="Country code"),
+    contract_number: Optional[str] = Query(None, description="Contract number for legacy system integration"),
     db: Session = Depends(get_database),
     storage: StorageService = Depends(get_storage_service),
     audit: AuditLogger = Depends(get_audit_logger),
@@ -139,7 +140,8 @@ async def upload_claim(
     # Create claim
     claim = models.Claim(
         status=models.ClaimStatus.PROCESSING.value,
-        country=country.value
+        country=country.value,
+        contract_number=contract_number
     )
     db.add(claim)
     db.commit()

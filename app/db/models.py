@@ -27,6 +27,7 @@ class Claim(Base):
     id = Column(Integer, primary_key=True, index=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     country = Column(String, nullable=False, default="SK")  # SK, IT, DE
+    contract_number = Column(String, nullable=True)  # Contract number for legacy system integration
     status = Column(String, default=ClaimStatus.PROCESSING.value)
     analysis_result = Column(JSONB, nullable=True)
     analysis_model = Column(String, nullable=True)  # Model used for analysis

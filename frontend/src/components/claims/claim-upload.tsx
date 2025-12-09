@@ -22,6 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 
 export function ClaimUpload() {
@@ -30,6 +31,7 @@ export function ClaimUpload() {
   const router = useRouter();
   const [files, setFiles] = useState<File[]>([]);
   const [country, setCountry] = useState<string>("SK");
+  const [contractNumber, setContractNumber] = useState<string>("");
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     setFiles((prev) => [...prev, ...acceptedFiles]);
@@ -54,13 +56,20 @@ export function ClaimUpload() {
         formData.append("files", file);
       });
 
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/api/v1/claims/upload?country=${country}`,
-        {
-          method: "POST",
-          body: formData,
-        }
+      // Build URL with query params
+      const url = new URL(
+        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/api/v1/claims/upload`
       );
+      url.searchParams.append("country", country);
+      if (contractNumber) {
+        url.searchParams.append("contract_number", contractNumber);
+      }
+
+      const response = await fetch(url.toString(), {
+        method: "POST",
+        credentials: "include",
+        body: formData,
+      });
 
       if (!response.ok) {
         throw new Error("Upload failed");
@@ -111,6 +120,27 @@ export function ClaimUpload() {
                 <SelectItem value="DE">🇩🇪 Germany</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Contract Number */}
+      <Card className="border-zinc-800 bg-zinc-900">
+        <CardHeader>
+          <CardTitle className="text-white">Číslo zmluvy</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-2">
+            <Label className="text-zinc-300">Contract Number (voliteľné)</Label>
+            <Input
+              value={contractNumber}
+              onChange={(e) => setContractNumber(e.target.value)}
+              placeholder="napr. ZML-2024-12345"
+              className="border-zinc-700 bg-zinc-800 text-white placeholder:text-zinc-500"
+            />
+            <p className="text-xs text-zinc-500">
+              Identifikátor pre načítanie dát z legacy systému
+            </p>
           </div>
         </CardContent>
       </Card>

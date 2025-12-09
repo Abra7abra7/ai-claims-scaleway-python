@@ -16,6 +16,10 @@ class ClaimUploadRequest(BaseModel):
         default=Country.SK,
         description="Country code for the claim"
     )
+    contract_number: Optional[str] = Field(
+        default=None,
+        description="Contract number for legacy system integration"
+    )
 
 
 class ClaimUpdateRequest(BaseModel):
@@ -38,6 +42,7 @@ class ClaimBase(BaseSchema):
     """Base claim schema."""
     id: int
     country: str
+    contract_number: Optional[str] = None
     status: ClaimStatus
     created_at: Optional[datetime] = None
 

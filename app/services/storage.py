@@ -82,3 +82,24 @@ class StorageService:
             self.s3_client.download_file(self.bucket_name, s3_key, local_path)
         except Exception as e:
             raise Exception(f"Failed to download file: {str(e)}")
+    
+    def download_bytes(self, s3_key: str) -> bytes:
+        """
+        Downloads a file from S3/MinIO and returns it as bytes.
+        Used for OCR processing with base64 encoding.
+        
+        Args:
+            s3_key: The S3 key of the file to download
+            
+        Returns:
+            File content as bytes
+        """
+        try:
+            response = self.s3_client.get_object(
+                Bucket=self.bucket_name,
+                Key=s3_key
+            )
+            return response['Body'].read()
+        except Exception as e:
+            print(f"Error downloading {s3_key}: {e}")
+            raise Exception(f"Failed to download file: {str(e)}")
