@@ -2,16 +2,20 @@
 
 Inteligentný systém na spracovanie poistných udalostí s využitím AI, OCR, anonymizácie a analýzy dokumentov.
 
+**Pre regulované prostredie (poisťovňa)** s plným audit loggingom a bezpečnou autentifikáciou.
+
 ## ✨ Hlavné Funkcie
 
+- **🔐 Enterprise Auth** - Bezpečná autentifikácia s DB sessions, IP logging, audit trail
 - **🔍 OCR Spracovanie** - Automatická extrakcia textu z PDF dokumentov (Mistral AI Document OCR)
 - **🧹 Data Cleaning** - Pravidlové čistenie a normalizácia OCR výstupu
 - **🔒 GDPR Anonymizácia** - Country-specific anonymizácia pomocou Microsoft Presidio (SK, IT, DE)
 - **👤 Human-in-the-Loop** - Manuálne kontrolné body pre OCR a anonymizáciu
 - **🤖 AI Analýza** - RAG-enhanced analýza s podporou viacerých AI providerov (Mistral, Gemini, OpenAI)
 - **📄 PDF Reporty** - Automatické generovanie structured PDF reportov
-- **📊 Audit Logging** - Kompletný audit trail všetkých zmien
+- **📊 Audit Logging** - Kompletný audit trail všetkých zmien (GDPR compliant)
 - **☁️ Scaleway Integration** - Managed PostgreSQL + S3 Object Storage
+- **🌍 Multi-language UI** - Podpora SK/EN s next-intl
 - **🔄 Retry & Recovery** - Manuálny retry pre zaseknuté procesy
 
 ## 🏗️ Architektúra
@@ -22,20 +26,22 @@ Inteligentný systém na spracovanie poistných udalostí s využitím AI, OCR, 
 │  (Next.js)  │         │  (FastAPI)   │
 │   :3000     │         │  :8000       │
 └─────────────┘         └──────┬───────┘
-                               │
-                ┌──────────────┼───────────────┐
-                │              │               │
-         ┌──────▼──────┐ ┌────▼─────┐  ┌─────▼──────┐
-         │   Worker    │ │  Redis   │  │  Presidio  │
-         │  (Celery)   │ │  :6379   │  │    API     │
-         └──────┬──────┘ └──────────┘  │   :8001    │
-                │                       └────────────┘
-    ┌───────────┴────────────┐
-    │                        │
-┌───▼────────────┐  ┌────────▼──────────┐
-│  PostgreSQL    │  │  Scaleway S3      │
-│  (pgvector)   │  │  Object Storage   │
-└────────────────┘  └───────────────────┘
+      │                        │
+      │                        │
+      │         ┌──────────────┼───────────────┐
+      │         │              │               │
+      │   ┌─────▼──────┐ ┌────▼─────┐  ┌─────▼──────┐
+      │   │   Worker   │ │  Redis   │  │  Presidio  │
+      │   │  (Celery)  │ │  :6379   │  │    API     │
+      │   └─────┬──────┘ └──────────┘  │   :8001    │
+      │         │                       └────────────┘
+      │    ┌────┴─────────────┐
+      │    │                  │
+      │ ┌──▼──────────────┐  ┌▼─────────────────┐
+      └▶│   PostgreSQL    │  │  Scaleway S3     │
+        │   (pgvector)    │  │  Object Storage  │
+        │   + Auth DB     │  └──────────────────┘
+        └─────────────────┘
 ```
 
 ## 🚀 Rýchly Štart
@@ -52,14 +58,42 @@ cp .env.example .env
 # Vyplň potrebné credentials
 
 # 3. Spusti služby
-./local-start.sh
-# Alebo manuálne:
 docker compose up -d
 
-# 4. Otvor v prehliadači
+# 4. Vytvor admin používateľa (prvýkrát)
+docker compose exec backend python -c "
+from app.db.session import SessionLocal
+from app.db.models import User, UserRole
+from app.services.auth import hash_password
+db = SessionLocal()
+admin = User(
+    email='admin@example.com',
+    password_hash=hash_password('admin123456'),
+    name='Admin',
+    role='admin',
+    locale='sk',
+    is_active=True,
+    email_verified=True
+)
+db.add(admin)
+db.commit()
+print('Admin created!')
+db.close()
+"
+
+# 5. Otvor v prehliadači
 # Frontend: http://localhost:3000
 # API Docs: http://localhost:8000/api/v1/docs
 ```
+
+### Prihlasovacie údaje (demo)
+
+```
+Email: admin@example.com
+Password: admin123456
+```
+
+⚠️ **Zmeňte heslo po prvom prihlásení!**
 
 Detailný návod: [QUICK_START.md](QUICK_START.md)
 
@@ -80,53 +114,76 @@ chmod +x deploy/install.sh
 
 Kompletný guide: [deploy/README.md](deploy/README.md)
 
+## 🔐 Autentifikácia (Enterprise)
+
+Systém obsahuje bezpečnú autentifikáciu vhodnú pre regulované prostredie:
+
+### Funkcie
+
+| Funkcia | Popis |
+|---------|-------|
+| **DB Sessions** | Sessions uložené v PostgreSQL |
+| **IP Logging** | Každé prihlásenie zaznamenáva IP a User-Agent |
+| **Audit Trail** | LOGIN_SUCCESS, LOGIN_FAILED, LOGOUT, PASSWORD_CHANGED |
+| **Session Management** | Možnosť odhlásiť konkrétne zariadenie |
+| **Role-based Access** | ADMIN, USER, VIEWER |
+| **Account Lock** | Admin môže zablokovať účet |
+| **Inactivity Timeout** | Automatické odhlásenie po 24h nečinnosti |
+
+### Auth API Endpoints
+
+```
+POST /api/v1/auth/register     - Registrácia
+POST /api/v1/auth/login        - Prihlásenie
+POST /api/v1/auth/logout       - Odhlásenie
+GET  /api/v1/auth/me           - Info o používateľovi
+POST /api/v1/auth/password/change - Zmena hesla
+GET  /api/v1/auth/sessions     - Aktívne sessions
+POST /api/v1/auth/sessions/{id}/revoke - Zrušiť session
+POST /api/v1/auth/sessions/revoke-all - Odhlásiť všade
+
+# Admin endpoints
+GET  /api/v1/auth/admin/users
+POST /api/v1/auth/admin/users/{id}/disable
+POST /api/v1/auth/admin/users/{id}/enable
+```
+
 ## 📖 Dokumentácia
 
 - **[QUICK_START.md](QUICK_START.md)** - Rýchly štart pre lokálny vývoj
 - **[docs/DEVELOPMENT.md](docs/DEVELOPMENT.md)** - Návod na vývoj a testovanie
 - **[docs/DEPLOYMENT_UPDATES.md](docs/DEPLOYMENT_UPDATES.md)** - Ako nasadzovať nové zmeny
+- **[docs/PROJECT_STATUS.md](docs/PROJECT_STATUS.md)** - Aktuálny stav projektu
 - **[deploy/README.md](deploy/README.md)** - Produkčný deployment na Scaleway
 - **[DEPLOYMENT_CHECKLIST.md](DEPLOYMENT_CHECKLIST.md)** - Deployment checklist
 - **[CHANGELOG_FIX.md](CHANGELOG_FIX.md)** - História opráv a zmien
 
 ## 🛠️ Tech Stack
 
-**Backend:** FastAPI, SQLAlchemy, Celery, Pydantic  
-**Frontend:** Next.js 16, React 19, TailwindCSS, shadcn/ui  
+**Backend:** FastAPI, SQLAlchemy, Celery, Pydantic, PBKDF2 password hashing  
+**Frontend:** Next.js 16, React 19, TailwindCSS v4, shadcn/ui, next-intl  
 **AI & ML:** Mistral AI, Google Gemini, OpenAI (modulárna podpora), Microsoft Presidio, pgvector  
+**Auth:** Custom DB sessions, HTTP-only cookies, role-based access  
 **Infrastructure:** Docker, PostgreSQL, Redis, S3  
 **Cloud:** Scaleway (Managed PostgreSQL, Object Storage, Compute)
 
 ## 🤖 AI Provider Configuration
 
-Systém podporuje **modulárnu architektúru** pre AI providerov. Môžeš jednoducho prepínať medzi rôznymi LLM službami bez zmeny kódu.
+Systém podporuje **modulárnu architektúru** pre AI providerov.
 
 ### Podporované Provideri
 
 - **Mistral AI** - Pre OCR a LLM analýzu
 - **Google Gemini** - Pre LLM analýzu (gemini-1.5-pro, gemini-1.5-flash)
-- **OpenAI** - Pre LLM analýzu (gpt-4-turbo, gpt-3.5-turbo) - *Plánované*
+- **OpenAI** - Pre LLM analýzu (gpt-4-turbo, gpt-3.5-turbo)
 
-### Konfigurácia Providera
-
-V `.env` súbore nastav:
+### Konfigurácia
 
 ```env
-# Vyber providera pre LLM (analýza textu)
-LLM_PROVIDER=gemini  # možnosti: mistral, openai, gemini
-
-# Voliteľne: špecifická verzia modelu
+LLM_PROVIDER=gemini  # mistral, openai, gemini
 LLM_MODEL_VERSION=gemini-1.5-flash
-
-# Provider pre OCR (extrakcia textu z PDF)
-OCR_PROVIDER=mistral  # aktuálne podporované: mistral
+OCR_PROVIDER=mistral
 ```
-
-**Výhody:**
-- ✅ Jednoduché prepínanie providerov bez zmeny kódu
-- ✅ Všetky API kľúče môžu byť v `.env` súčasne
-- ✅ Fallback na default provider ak je problém
-- ✅ Konzistentné API cez všetkých providerov
 
 ## 📋 Workflow
 
@@ -141,22 +198,24 @@ OCR_PROVIDER=mistral  # aktuálne podporované: mistral
 
 ## 🔐 Environment Variables
 
-Potrebné premenné v `.env` súbore:
-
 ```env
+# ==============================================
+# 🔐 AUTH
+# ==============================================
+BETTER_AUTH_SECRET=your-32-char-secret
+
 # ==============================================
 # 🤖 AI PROVIDER SELECTION
 # ==============================================
-LLM_PROVIDER=mistral  # mistral, openai, gemini
-LLM_MODEL_VERSION=mistral-small-latest  # Voliteľné
+LLM_PROVIDER=mistral
 OCR_PROVIDER=mistral
 
 # ==============================================
 # 🔑 API KEYS
 # ==============================================
 MISTRAL_API_KEY=your_mistral_key
-OPENAI_API_KEY=your_openai_key  # Voliteľné
-GEMINI_API_KEY=your_gemini_key  # Voliteľné
+OPENAI_API_KEY=your_openai_key
+GEMINI_API_KEY=your_gemini_key
 
 # ==============================================
 # ☁️ SCALEWAY STORAGE & DATABASE
@@ -174,27 +233,18 @@ PRESIDIO_URL=http://presidio:8001
 
 **Nikdy necommituj `.env` súbor do Gitu!**
 
-## 🔄 Retry & Recovery
-
-Systém obsahuje zabudované mechanizmy na zotavenie z chýb:
-
-- **Retry Anonymization** - Pre zaseknuté anonymizačné procesy
-- **Reset Analysis Status** - Pre zaseknuté alebo zlyhané analýzy
-- **Automatické error handling** - Failed claims sú označené a môžu byť reštartované
-
-## 🤝 Prispievanie
-
-Pozri [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) pre návod na lokálny vývoj a [docs/DEPLOYMENT_UPDATES.md](docs/DEPLOYMENT_UPDATES.md) pre nasadzovanie zmien.
-
 ## 📊 Status Projektu
 
 ✅ **Produkčný deployment dokončený**  
 ✅ Všetky služby funkčné  
+✅ Backend autentifikácia s audit logom  
 ✅ Presidio anonymizácia funguje  
 ✅ RAG systém implementovaný  
 ✅ PDF report generation  
 ✅ Modulárna podpora AI providerov (Mistral, Gemini)  
-✅ Retry & Recovery mechanizmy
+✅ Retry & Recovery mechanizmy  
+✅ Next.js 16 frontend s dark theme  
+✅ Multi-language support (SK/EN)
 
 ## 🆘 Support & Troubleshooting
 
@@ -212,3 +262,5 @@ Proprietary - All rights reserved
 
 **Projekt je nasadený a funguje na Scaleway infraštruktúre.**  
 Pre viac informácií pozri dokumentáciu v `/docs` priečinku.
+
+**Last updated:** 2024-12-09
