@@ -42,8 +42,11 @@ export default function SignUpPage() {
       if (result.error) {
         toast.error(result.error.message || "Sign up failed");
       } else {
-        toast.success("Account created successfully");
-        router.push("/");
+        toast.success("Account created! Please check your email to verify your account.");
+        // Redirect to sign-in page (email verification required before login)
+        setTimeout(() => {
+          router.push("/auth/sign-in");
+        }, 2000);
       }
     } catch (error) {
       toast.error("An error occurred during sign up");

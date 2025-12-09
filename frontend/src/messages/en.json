@@ -43,6 +43,8 @@
     "welcomeBack": "Welcome back",
     "signInDescription": "Sign in to your account",
     "name": "Name",
+    "accountCreated": "Account created! Please check your email to verify your account.",
+    "verifyEmailFirst": "Please verify your email first. Check your inbox.",
     "forgotPasswordDescription": "Enter your email address and we'll send you a password reset link",
     "sendResetLink": "Send Reset Link",
     "sending": "Sending...",

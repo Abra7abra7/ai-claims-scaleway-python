@@ -83,12 +83,15 @@ async def register(
     db: Session = Depends(get_db)
 ):
     """
-    Register a new user.
+    Register a new user and send email verification.
     
     - **email**: Valid email address (unique)
     - **password**: At least 8 characters
     - **name**: User's display name
     - **locale**: Preferred language (sk or en)
+    
+    After registration, a verification email is automatically sent.
+    User must verify email before being able to log in.
     """
     user, error = auth_service.register_user(
         db=db,
@@ -105,6 +108,22 @@ async def register(
             detail=error
         )
     
+    # Automatically send verification email
+    email_service = get_email_service()
+    token_service = get_token_service()
+    
+    verification_token = token_service.create_email_verification_token(
+        email=user.email,
+        db=db,
+        expires_in_hours=24
+    )
+    
+    email_service.send_verification_email(
+        to_email=user.email,
+        verification_token=verification_token,
+        user_name=user.name
+    )
+    
     return user
 
 
@@ -118,8 +137,10 @@ async def login(
     """
     Authenticate user and create session.
     
+    Requires email verification before allowing login.
     Returns session token in both response body and HTTP-only cookie.
     """
+    # First verify credentials
     session, error = auth_service.login(
         db=db,
         email=data.email,
@@ -131,6 +152,29 @@ async def login(
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=error
+        )
+    
+    # Check if email is verified (security requirement)
+    user = db.query(User).filter(User.email == data.email).first()
+    if user and not user.email_verified:
+        # Log failed login attempt due to unverified email
+        from app.services.audit import AuditLogger
+        audit = AuditLogger()
+        audit.log(
+            db=db,
+            user=data.email,
+            action="LOGIN_FAILED",
+            entity_type="User",
+            entity_id=user.id,
+            changes={
+                "reason": "email_not_verified",
+                "ip_address": request.client.host if request.client else None
+            }
+        )
+        
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Please verify your email before signing in. Check your inbox for the verification link."
         )
     
     # Set HTTP-only cookie for browser clients

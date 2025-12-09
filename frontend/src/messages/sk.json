@@ -43,6 +43,8 @@
     "welcomeBack": "Vitajte späť",
     "signInDescription": "Prihláste sa do svojho účtu",
     "name": "Meno",
+    "accountCreated": "Účet vytvorený! Skontrolujte si email pre overenie účtu.",
+    "verifyEmailFirst": "Najprv overte váš email. Skontrolujte si doručenú poštu.",
     "forgotPasswordDescription": "Zadajte e-mailovú adresu a my vám pošleme odkaz na obnovenie hesla",
     "sendResetLink": "Odoslať odkaz",
     "sending": "Odosielam...",

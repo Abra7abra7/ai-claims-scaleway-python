@@ -75,12 +75,15 @@ export interface paths {
         put?: never;
         /**
          * Register
-         * @description Register a new user.
+         * @description Register a new user and send email verification.
          *
          *     - **email**: Valid email address (unique)
          *     - **password**: At least 8 characters
          *     - **name**: User's display name
          *     - **locale**: Preferred language (sk or en)
+         *
+         *     After registration, a verification email is automatically sent.
+         *     User must verify email before being able to log in.
          */
         post: operations["register_api_v1_auth_register_post"];
         delete?: never;
@@ -102,6 +105,7 @@ export interface paths {
          * Login
          * @description Authenticate user and create session.
          *
+         *     Requires email verification before allowing login.
          *     Returns session token in both response body and HTTP-only cookie.
          */
         post: operations["login_api_v1_auth_login_post"];
