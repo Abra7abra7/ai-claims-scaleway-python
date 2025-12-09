@@ -1,109 +1,92 @@
 """
-Authentication schemas for API v1.
-Prepared for Better Auth integration.
+Authentication schemas for request/response validation.
 """
-from pydantic import BaseModel, Field, EmailStr
-from typing import Optional
+
+from pydantic import BaseModel, EmailStr, Field
+from typing import Optional, List
 from datetime import datetime
-from .base import BaseSchema
 
 
-# ==================== User Schemas ====================
+# ============ Request Schemas ============
 
-class UserBase(BaseModel):
-    """Base user schema."""
+class UserRegisterRequest(BaseModel):
+    """User registration request."""
     email: EmailStr
-    name: Optional[str] = None
+    password: str = Field(..., min_length=8, description="Password (min 8 characters)")
+    name: str = Field(..., min_length=2, max_length=100)
+    locale: str = Field(default="sk", pattern="^(sk|en)$")
 
 
-class UserCreate(UserBase):
-    """Schema for creating a new user."""
-    password: str = Field(..., min_length=8)
-
-
-class UserResponse(BaseSchema):
-    """User response schema."""
-    id: str
-    email: EmailStr
-    name: Optional[str] = None
-    role: str = "user"
-    created_at: Optional[datetime] = None
-    updated_at: Optional[datetime] = None
-
-
-class UserListResponse(BaseModel):
-    """List of users (admin only)."""
-    items: list[UserResponse]
-    total: int
-
-
-# ==================== Auth Schemas ====================
-
-class LoginRequest(BaseModel):
-    """Login request."""
+class UserLoginRequest(BaseModel):
+    """User login request."""
     email: EmailStr
     password: str
 
 
-class LoginResponse(BaseModel):
-    """Login response."""
-    access_token: str
-    token_type: str = "bearer"
-    expires_in: int
-    user: UserResponse
+class PasswordChangeRequest(BaseModel):
+    """Password change request."""
+    old_password: str
+    new_password: str = Field(..., min_length=8)
 
 
-class TokenPayload(BaseModel):
-    """JWT token payload."""
-    sub: str  # user id
+class SessionRevokeRequest(BaseModel):
+    """Session revocation request."""
+    session_id: int
+    reason: Optional[str] = "admin_revoked"
+
+
+# ============ Response Schemas ============
+
+class UserResponse(BaseModel):
+    """User information response."""
+    id: int
     email: str
+    name: str
     role: str
-    exp: datetime
-
-
-class CurrentUserResponse(BaseModel):
-    """Current authenticated user."""
-    user: UserResponse
-    permissions: list[str]
-
-
-# ==================== Session Schemas ====================
-
-class SessionInfo(BaseModel):
-    """Session information."""
-    id: str
-    user_id: str
+    locale: str
+    is_active: bool
+    email_verified: bool
     created_at: datetime
-    expires_at: datetime
+    last_login_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+
+class SessionResponse(BaseModel):
+    """Session information response."""
+    id: int
     ip_address: Optional[str] = None
     user_agent: Optional[str] = None
-
-
-# ==================== API Key Schemas (alternative auth) ====================
-
-class APIKeyCreate(BaseModel):
-    """Create new API key."""
-    name: str = Field(..., description="Name/description for the API key")
-    expires_in_days: Optional[int] = Field(
-        default=None,
-        description="Expiration in days (None = never expires)"
-    )
-
-
-class APIKeyResponse(BaseModel):
-    """API key response (key shown only once)."""
-    id: str
-    name: str
-    key: str  # Only shown on creation
     created_at: datetime
-    expires_at: Optional[datetime] = None
+    expires_at: datetime
+    last_activity_at: datetime
+    is_current: bool = False
+
+    class Config:
+        from_attributes = True
 
 
-class APIKeyListItem(BaseModel):
-    """API key list item (without actual key)."""
-    id: str
-    name: str
-    created_at: datetime
-    expires_at: Optional[datetime] = None
-    last_used_at: Optional[datetime] = None
+class LoginResponse(BaseModel):
+    """Login response with session token."""
+    token: str
+    user: UserResponse
+    expires_at: datetime
 
+
+class AuthStatusResponse(BaseModel):
+    """Authentication status response."""
+    authenticated: bool
+    user: Optional[UserResponse] = None
+
+
+class MessageResponse(BaseModel):
+    """Generic message response."""
+    message: str
+    success: bool = True
+
+
+class SessionListResponse(BaseModel):
+    """List of user sessions."""
+    sessions: List[SessionResponse]
+    total: int

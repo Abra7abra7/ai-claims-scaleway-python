@@ -103,3 +103,57 @@ class PromptTemplate(Base):
     template = Column(Text, nullable=False)
     llm_model = Column(String, default="mistral-small-latest")
     created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class UserRole(str, enum.Enum):
+    ADMIN = "admin"
+    USER = "user"
+    VIEWER = "viewer"
+
+
+class User(Base):
+    """User model for authentication and authorization."""
+    __tablename__ = "users"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    email = Column(String, unique=True, nullable=False, index=True)
+    password_hash = Column(String, nullable=False)
+    name = Column(String, nullable=False)
+    role = Column(String, default=UserRole.USER.value)
+    locale = Column(String, default="sk")  # sk, en
+    is_active = Column(Boolean, default=True)
+    email_verified = Column(Boolean, default=False)
+    
+    # Timestamps
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    last_login_at = Column(DateTime, nullable=True)
+    
+    # Relationships
+    sessions = relationship("UserSession", back_populates="user", cascade="all, delete-orphan")
+
+
+class UserSession(Base):
+    """User session for tracking active logins."""
+    __tablename__ = "user_sessions"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    token = Column(String, unique=True, nullable=False, index=True)
+    
+    # Session metadata for audit
+    ip_address = Column(String, nullable=True)
+    user_agent = Column(String, nullable=True)
+    
+    # Timestamps
+    created_at = Column(DateTime, default=datetime.utcnow)
+    expires_at = Column(DateTime, nullable=False)
+    last_activity_at = Column(DateTime, default=datetime.utcnow)
+    
+    # Revocation
+    is_revoked = Column(Boolean, default=False)
+    revoked_at = Column(DateTime, nullable=True)
+    revoked_reason = Column(String, nullable=True)
+    
+    # Relationships
+    user = relationship("User", back_populates="sessions")
