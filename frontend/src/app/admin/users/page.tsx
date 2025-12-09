@@ -21,29 +21,9 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import type { User, UserSession } from "@/lib/types";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-
-interface User {
-  id: number;
-  email: string;
-  name: string;
-  role: string;
-  locale: string;
-  is_active: boolean;
-  email_verified: boolean;
-  created_at: string;
-  last_login_at: string | null;
-}
-
-interface UserSession {
-  id: number;
-  ip_address: string | null;
-  user_agent: string | null;
-  created_at: string;
-  expires_at: string;
-  last_activity_at: string;
-}
 
 export default function AdminUsersPage() {
   const [loading, setLoading] = useState(true);

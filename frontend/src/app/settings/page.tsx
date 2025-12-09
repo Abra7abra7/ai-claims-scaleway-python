@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { User, Lock, Globe, Loader2, Save, Check } from "lucide-react";
+import { User as UserIcon, Lock, Globe, Loader2, Save, Check } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,26 +15,15 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
+import type { User } from "@/lib/types";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-
-interface UserProfile {
-  id: number;
-  email: string;
-  name: string;
-  role: string;
-  locale: string;
-  is_active: boolean;
-  email_verified: boolean;
-  created_at: string;
-  last_login_at: string | null;
-}
 
 export default function SettingsPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [changingPassword, setChangingPassword] = useState(false);
-  const [user, setUser] = useState<UserProfile | null>(null);
+  const [user, setUser] = useState<User | null>(null);
 
   // Password change
   const [currentPassword, setCurrentPassword] = useState("");
@@ -145,7 +134,7 @@ export default function SettingsPage() {
       <Card className="border-zinc-800 bg-zinc-900">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <User className="h-5 w-5 text-emerald-400" />
+            <UserIcon className="h-5 w-5 text-emerald-400" />
             Profile Information
           </CardTitle>
           <CardDescription>Your account details</CardDescription>

@@ -42,21 +42,13 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
+import type { components } from "@/lib/api-types";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
-interface RAGDocument {
-  id: number;
-  filename: string;
-  country: string;
-  document_type: string;
-  uploaded_by: string | null;
-  created_at: string;
-}
-
-interface FolderStructure {
-  countries: Record<string, Record<string, number>>;
-}
+// Use auto-generated types from OpenAPI
+type RAGDocument = components["schemas"]["RAGDocumentSummary"];
+type FolderStructure = components["schemas"]["RAGFolderStructure"];
 
 const COUNTRIES = [
   { value: "SK", label: "Slovakia" },

@@ -9,21 +9,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import type { AnonReviewDocument, AnonReviewResponse } from "@/lib/types";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-
-interface AnonDocument {
-  id: number;
-  filename: string;
-  cleaned_text: string | null;
-  anonymized_text: string | null;
-}
-
-interface AnonReviewData {
-  claim_id: number;
-  country: string;
-  documents: AnonDocument[];
-}
 
 export default function AnonymizationReviewPage() {
   const params = useParams();
@@ -35,7 +23,7 @@ export default function AnonymizationReviewPage() {
   const [approving, setApproving] = useState(false);
   const [retrying, setRetrying] = useState(false);
   const [reCleaning, setReCleaning] = useState(false);
-  const [data, setData] = useState<AnonReviewData | null>(null);
+  const [data, setData] = useState<AnonReviewResponse | null>(null);
   const [currentDocIndex, setCurrentDocIndex] = useState(0);
   const [editedTexts, setEditedTexts] = useState<Record<number, string>>({});
   const [error, setError] = useState<string | null>(null);

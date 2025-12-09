@@ -16,23 +16,13 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { toast } from "sonner";
+import type { ReportSummary, ClaimSummary } from "@/lib/types";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
-interface Report {
-  id: number;
-  claim_id: number;
-  s3_key: string;
-  model_used: string | null;
-  prompt_id: string | null;
-  created_at: string;
-}
-
-interface ClaimWithReports {
-  id: number;
-  country: string;
-  status: string;
-  reports: Report[];
+// Extended type for UI purposes
+interface ClaimWithReports extends Pick<ClaimSummary, "id" | "country" | "status"> {
+  reports: ReportSummary[];
 }
 
 export default function ReportsPage() {
@@ -262,7 +252,7 @@ export default function ReportsPage() {
                         {report.prompt_id || "default"}
                       </TableCell>
                       <TableCell className="text-zinc-400">
-                        {formatDate(report.created_at)}
+                        {report.created_at ? formatDate(report.created_at) : "—"}
                       </TableCell>
                       <TableCell className="text-right">
                         <Button

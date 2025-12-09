@@ -22,25 +22,9 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import type { AuditLog, AuditLogListResponse } from "@/lib/types";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-
-interface AuditLog {
-  id: number;
-  user: string;
-  action: string;
-  entity_type: string;
-  entity_id: number | null;
-  changes: Record<string, any> | null;
-  timestamp: string;
-}
-
-interface AuditResponse {
-  items: AuditLog[];
-  total: number;
-  skip: number;
-  limit: number;
-}
 
 const ACTION_COLORS: Record<string, string> = {
   LOGIN_SUCCESS: "text-emerald-400 border-emerald-400",
@@ -114,7 +98,7 @@ export default function AuditPage() {
         throw new Error("Failed to fetch audit logs");
       }
 
-      const data: AuditResponse = await response.json();
+      const data: AuditLogListResponse = await response.json();
       setLogs(data.items);
       setTotal(data.total);
     } catch (err: any) {

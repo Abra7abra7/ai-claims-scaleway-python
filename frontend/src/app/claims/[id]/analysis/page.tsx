@@ -10,35 +10,9 @@ import { Badge } from "@/components/ui/badge";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import type { PromptSummary, PromptListResponse, ClaimDetail } from "@/lib/types";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-
-interface Prompt {
-  id: string;
-  name: string;
-  description: string | null;
-  llm_model: string;
-}
-
-interface PromptListResponse {
-  prompts: Prompt[];
-  default: string;
-}
-
-interface AnalysisResult {
-  claim_id: number;
-  status: string;
-  model_used: string | null;
-  result: any;
-}
-
-interface ClaimData {
-  id: number;
-  status: string;
-  country: string;
-  analysis_result: any;
-  analysis_model: string | null;
-}
 
 export default function AnalysisPage() {
   const params = useParams();
@@ -48,9 +22,9 @@ export default function AnalysisPage() {
   const [loading, setLoading] = useState(true);
   const [starting, setStarting] = useState(false);
   const [resetting, setResetting] = useState(false);
-  const [prompts, setPrompts] = useState<Prompt[]>([]);
+  const [prompts, setPrompts] = useState<PromptSummary[]>([]);
   const [selectedPrompt, setSelectedPrompt] = useState<string>("");
-  const [claim, setClaim] = useState<ClaimData | null>(null);
+  const [claim, setClaim] = useState<ClaimDetail | null>(null);
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
   const [error, setError] = useState<string | null>(null);
 

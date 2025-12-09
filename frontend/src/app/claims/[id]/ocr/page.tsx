@@ -10,35 +10,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import type { 
+  OCRReviewDocument, 
+  OCRReviewResponse, 
+  CleaningStats, 
+  CleaningPreviewDocument 
+} from "@/lib/types";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-
-interface OCRDocument {
-  id: number;
-  filename: string;
-  original_text: string | null;
-}
-
-interface OCRReviewData {
-  claim_id: number;
-  country: string;
-  documents: OCRDocument[];
-}
-
-interface CleaningStats {
-  original_length: number;
-  cleaned_length: number;
-  characters_removed: number;
-  reduction_percent: number;
-}
-
-interface CleaningPreviewDoc {
-  id: number;
-  filename: string;
-  original_text: string;
-  cleaned_text: string;
-  stats: CleaningStats;
-}
 
 export default function OCRReviewPage() {
   const params = useParams();
@@ -48,10 +27,10 @@ export default function OCRReviewPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [approving, setApproving] = useState(false);
-  const [data, setData] = useState<OCRReviewData | null>(null);
+  const [data, setData] = useState<OCRReviewResponse | null>(null);
   const [currentDocIndex, setCurrentDocIndex] = useState(0);
   const [editedTexts, setEditedTexts] = useState<Record<number, string>>({});
-  const [cleaningPreview, setCleaningPreview] = useState<CleaningPreviewDoc[] | null>(null);
+  const [cleaningPreview, setCleaningPreview] = useState<CleaningPreviewDocument[] | null>(null);
   const [showPreview, setShowPreview] = useState(false);
   const [error, setError] = useState<string | null>(null);
 

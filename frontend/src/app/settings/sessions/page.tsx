@@ -16,22 +16,13 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
+import type { UserSession } from "@/lib/types";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
-interface SessionInfo {
-  id: number;
-  ip_address: string | null;
-  user_agent: string | null;
-  created_at: string;
-  expires_at: string;
-  last_activity_at: string;
-  is_current: boolean;
-}
-
 export default function SessionsPage() {
   const [loading, setLoading] = useState(true);
-  const [sessions, setSessions] = useState<SessionInfo[]>([]);
+  const [sessions, setSessions] = useState<UserSession[]>([]);
   const [revoking, setRevoking] = useState<number | null>(null);
   const [revokingAll, setRevokingAll] = useState(false);
   const [confirmRevokeAll, setConfirmRevokeAll] = useState(false);
