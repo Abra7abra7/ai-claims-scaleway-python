@@ -44,7 +44,7 @@ export default function AnonymizationReviewPage() {
         throw new Error(err.detail || "Failed to load anonymization data");
       }
 
-      const result: AnonReviewData = await response.json();
+      const result: AnonReviewResponse = await response.json();
       setData(result);
 
       // Initialize edited texts
