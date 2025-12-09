@@ -2,7 +2,9 @@
 Reports endpoints.
 """
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
+import io
 
 from app.api.deps import (
     get_database,
@@ -96,9 +98,8 @@ def get_report(
 
 @router.get(
     "/{report_id}/download",
-    response_model=ReportDownloadResponse,
     summary="Download report",
-    description="Get presigned URL for report download"
+    description="Stream report PDF directly from storage"
 )
 def download_report(
     report_id: int,
@@ -106,7 +107,7 @@ def download_report(
     storage: StorageService = Depends(get_storage_service)
 ):
     """
-    Get presigned URL for report download.
+    Stream report PDF directly from MinIO to browser.
     """
     report = db.query(models.AnalysisReport).filter(
         models.AnalysisReport.id == report_id
@@ -118,10 +119,26 @@ def download_report(
             detail="Report not found"
         )
     
-    presigned_url = storage.generate_presigned_url(report.s3_key)
-    
-    return ReportDownloadResponse(
-        download_url=presigned_url,
-        expires_in=3600
-    )
+    try:
+        # Download file from MinIO
+        file_content = storage.download_bytes(report.s3_key)
+        
+        # Generate filename from s3_key
+        filename = report.s3_key.split('/')[-1]
+        
+        # Stream to browser
+        return StreamingResponse(
+            io.BytesIO(file_content),
+            media_type="application/pdf",
+            headers={
+                "Content-Disposition": f'attachment; filename="{filename}"',
+                "Access-Control-Allow-Origin": "*",
+                "Cache-Control": "public, max-age=3600"
+            }
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to retrieve report: {str(e)}"
+        )
 

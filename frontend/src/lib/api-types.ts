@@ -511,6 +511,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/documents/{document_id}/download": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Download document
+         * @description Stream document file directly from storage
+         */
+        get: operations["download_document_api_v1_documents__document_id__download_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/claims/{claim_id}/ocr": {
         parameters: {
             query?: never;
@@ -840,7 +860,7 @@ export interface paths {
         };
         /**
          * Download report
-         * @description Get presigned URL for report download
+         * @description Stream report PDF directly from storage
          */
         get: operations["download_report_api_v1_reports__report_id__download_get"];
         put?: never;
@@ -1689,20 +1709,6 @@ export interface components {
             id: number;
             /** Message */
             message: string;
-        };
-        /**
-         * ReportDownloadResponse
-         * @description Response with download URL.
-         */
-        ReportDownloadResponse: {
-            /** Download Url */
-            download_url: string;
-            /**
-             * Expires In
-             * @description URL expiration time in seconds
-             * @default 3600
-             */
-            expires_in: number;
         };
         /**
          * ReportListResponse
@@ -2795,6 +2801,37 @@ export interface operations {
             };
         };
     };
+    download_document_api_v1_documents__document_id__download_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                document_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_ocr_review_api_v1_claims__claim_id__ocr_get: {
         parameters: {
             query?: never;
@@ -3353,7 +3390,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ReportDownloadResponse"];
+                    "application/json": unknown;
                 };
             };
             /** @description Validation Error */

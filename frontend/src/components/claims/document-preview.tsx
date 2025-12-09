@@ -9,7 +9,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 
@@ -38,12 +37,12 @@ export function DocumentPreview({
   const handleDownload = (type: string, content: string) => {
     const blob = new Blob([content], { type: "text/plain" });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
+    const a = window.document.createElement("a");
     a.href = url;
     a.download = `${document.filename.replace(".pdf", "")}_${type}.txt`;
-    document.body.appendChild(a);
+    window.document.body.appendChild(a);
     a.click();
-    document.body.removeChild(a);
+    window.document.body.removeChild(a);
     URL.revokeObjectURL(url);
   };
 
@@ -86,11 +85,14 @@ export function DocumentPreview({
   ];
 
   const availableTabs = tabs.filter((tab) => tab.available);
+  const activeTabData = availableTabs.find((tab) => tab.value === activeTab);
+
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl h-[80vh] bg-zinc-900 border-zinc-800">
-        <DialogHeader>
+      <DialogContent className="max-w-[98vw] h-[98vh] bg-zinc-900 border-zinc-800 flex flex-col overflow-hidden p-0">
+        <DialogHeader className="px-6 py-4 border-b border-zinc-800">
           <DialogTitle className="flex items-center justify-between">
             <span className="text-white">{document.filename}</span>
             <Button
@@ -103,90 +105,76 @@ export function DocumentPreview({
           </DialogTitle>
         </DialogHeader>
 
-        <Tabs
-          value={activeTab}
-          onValueChange={setActiveTab}
-          className="flex-1 flex flex-col"
-        >
-          <TabsList className="bg-zinc-800 border-zinc-700">
+        {/* Horizontal Layout: Sidebar + Content */}
+        <div className="flex-1 flex overflow-hidden">
+          {/* Tabs Sidebar - Left */}
+          <div className="w-56 border-r border-zinc-800 bg-zinc-900/50 p-4 flex flex-col gap-2">
             {availableTabs.map((tab) => {
               const Icon = tab.icon;
               return (
-                <TabsTrigger
+                <Button
                   key={tab.value}
-                  value={tab.value}
-                  className="data-[state=active]:bg-zinc-700"
+                  variant={activeTab === tab.value ? "default" : "ghost"}
+                  className={`w-full justify-start ${
+                    activeTab === tab.value
+                      ? "bg-emerald-600 hover:bg-emerald-700 text-white"
+                      : "text-zinc-400 hover:text-white hover:bg-zinc-800"
+                  }`}
+                  onClick={() => setActiveTab(tab.value)}
                 >
                   <Icon className="mr-2 h-4 w-4" />
                   {tab.label}
-                </TabsTrigger>
+                </Button>
               );
             })}
-          </TabsList>
+          </div>
 
-          {availableTabs.map((tab) => (
-            <TabsContent
-              key={tab.value}
-              value={tab.value}
-              className="flex-1 mt-4"
-            >
-              {tab.value === "original" && tab.content ? (
-                <div className="flex flex-col items-center justify-center h-full space-y-4">
-                  <FileText className="h-16 w-16 text-zinc-600" />
-                  <p className="text-zinc-400">PDF Preview not available</p>
+          {/* Content Area - Right */}
+          <div className="flex-1 overflow-hidden p-6">
+            {activeTabData?.value === "original" && activeTabData.content ? (
+              <div className="h-full w-full rounded-lg border border-zinc-700 overflow-hidden bg-zinc-950">
+                <iframe
+                  src={`${apiUrl}/api/v1/documents/${document.id}/download`}
+                  className="w-full h-full"
+                  title={document.filename}
+                />
+              </div>
+            ) : activeTabData?.value === "analysis" ? (
+              <ScrollArea className="h-full">
+                <pre className="rounded-lg bg-zinc-800 p-4 text-sm text-zinc-300 whitespace-pre-wrap break-words">
+                  {typeof activeTabData.content === "string"
+                    ? activeTabData.content
+                    : JSON.stringify(activeTabData.content, null, 2)}
+                </pre>
+              </ScrollArea>
+            ) : (
+              <div className="flex flex-col h-full">
+                <div className="flex items-center justify-between mb-4 flex-shrink-0">
+                  <Badge variant="outline" className="text-zinc-400">
+                    {(activeTabData?.content as string)?.length || 0} characters
+                  </Badge>
                   <Button
                     variant="outline"
-                    onClick={() => {
-                      // Open PDF in new tab
-                      const apiUrl =
-                        process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-                      window.open(
-                        `${apiUrl}/api/v1/documents/${document.id}/download`,
-                        "_blank"
-                      );
-                    }}
+                    size="sm"
+                    onClick={() =>
+                      activeTabData &&
+                      handleDownload(activeTabData.value, activeTabData.content as string)
+                    }
                   >
                     <Download className="mr-2 h-4 w-4" />
-                    Download PDF
+                    Download
                   </Button>
                 </div>
-              ) : tab.value === "analysis" ? (
-                <ScrollArea className="h-full">
-                  <pre className="rounded-lg bg-zinc-800 p-4 text-sm text-zinc-300">
-                    {typeof tab.content === "string"
-                      ? tab.content
-                      : JSON.stringify(tab.content, null, 2)}
+                <ScrollArea className="flex-1">
+                  <pre className="rounded-lg bg-zinc-800 p-4 text-sm text-zinc-300 whitespace-pre-wrap break-words">
+                    {activeTabData?.content as string}
                   </pre>
                 </ScrollArea>
-              ) : (
-                <div className="flex flex-col h-full">
-                  <div className="flex items-center justify-between mb-4">
-                    <Badge variant="outline" className="text-zinc-400">
-                      {(tab.content as string)?.length || 0} characters
-                    </Badge>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() =>
-                        handleDownload(tab.value, tab.content as string)
-                      }
-                    >
-                      <Download className="mr-2 h-4 w-4" />
-                      Download
-                    </Button>
-                  </div>
-                  <ScrollArea className="flex-1">
-                    <pre className="rounded-lg bg-zinc-800 p-4 text-sm text-zinc-300 whitespace-pre-wrap">
-                      {tab.content as string}
-                    </pre>
-                  </ScrollArea>
-                </div>
-              )}
-            </TabsContent>
-          ))}
-        </Tabs>
+              </div>
+            )}
+          </div>
+        </div>
       </DialogContent>
     </Dialog>
   );
 }
-

@@ -7,6 +7,7 @@ from app.api.v1.endpoints import (
     health,
     auth,
     claims,
+    documents,
     ocr,
     anonymization,
     analysis,
@@ -38,6 +39,13 @@ api_router.include_router(
     claims.router,
     prefix="/claims",
     tags=["Claims"]
+)
+
+# Documents
+api_router.include_router(
+    documents.router,
+    prefix="/documents",
+    tags=["Documents"]
 )
 
 # OCR Review - nested under claims

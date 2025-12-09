@@ -137,16 +137,8 @@ export function ClaimDetail({ claimId }: ClaimDetailProps) {
   const handleDownloadReport = async (reportId: number) => {
     try {
       setDownloadingReport(reportId);
-      const { data, error } = await api.GET("/api/v1/reports/{report_id}/download", {
-        params: { path: { report_id: reportId } },
-      });
-
-      if (error || !data?.download_url) {
-        throw new Error("Failed to get download URL");
-      }
-
-      // Open in new tab
-      window.open(data.download_url, "_blank");
+      // Direct download from backend proxy
+      window.open(`${API_URL}/api/v1/reports/${reportId}/download`, "_blank");
       toast.success("Report download started");
     } catch (err: any) {
       toast.error(err.message || "Failed to download report");
