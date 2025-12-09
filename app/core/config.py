@@ -30,6 +30,15 @@ class Settings(BaseSettings):
     S3_BUCKET_NAME: str
     S3_ENDPOINT_URL: str
     S3_REGION: str
+    
+    # Email / SMTP Configuration
+    SMTP_HOST: str = "smtp.gmail.com"
+    SMTP_PORT: int = 587
+    SMTP_USER: Optional[str] = None
+    SMTP_PASSWORD: Optional[str] = None
+    SMTP_FROM: str = "noreply@company.sk"
+    SMTP_USE_TLS: str = "true"
+    FRONTEND_URL: str = "http://localhost:3000"
 
     class Config:
         env_file = ".env"
