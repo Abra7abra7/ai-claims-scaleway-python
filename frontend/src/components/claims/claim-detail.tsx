@@ -76,6 +76,7 @@ export function ClaimDetail({ claimId }: ClaimDetailProps) {
   const [deleting, setDeleting] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [previewDocument, setPreviewDocument] = useState<any | null>(null);
+  const [downloadingReport, setDownloadingReport] = useState<number | null>(null);
 
   // Fetch claim data
   const { data: claim, isLoading, error } = useQuery({
@@ -91,6 +92,19 @@ export function ClaimDetail({ claimId }: ClaimDetailProps) {
 
   // Use polling hook for real-time updates (uses same query key)
   const { isPolling } = useClaimPolling({ claimId });
+
+  // Fetch reports
+  const { data: reportsData } = useQuery({
+    queryKey: ["reports", claimId],
+    queryFn: async () => {
+      const { data, error } = await api.GET("/api/v1/reports/claims/{claim_id}", {
+        params: { path: { claim_id: claimId } },
+      });
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!claim && claim.status === "ANALYZED",
+  });
 
   const handleDelete = async () => {
     try {
@@ -117,6 +131,27 @@ export function ClaimDetail({ claimId }: ClaimDetailProps) {
     } finally {
       setDeleting(false);
       setShowDeleteDialog(false);
+    }
+  };
+
+  const handleDownloadReport = async (reportId: number) => {
+    try {
+      setDownloadingReport(reportId);
+      const { data, error } = await api.GET("/api/v1/reports/{report_id}/download", {
+        params: { path: { report_id: reportId } },
+      });
+
+      if (error || !data?.download_url) {
+        throw new Error("Failed to get download URL");
+      }
+
+      // Open in new tab
+      window.open(data.download_url, "_blank");
+      toast.success("Report download started");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to download report");
+    } finally {
+      setDownloadingReport(null);
     }
   };
 
@@ -308,6 +343,47 @@ export function ClaimDetail({ claimId }: ClaimDetailProps) {
           ))}
         </CardContent>
       </Card>
+
+          {/* Reports */}
+          {reportsData && reportsData.reports && reportsData.reports.length > 0 && (
+            <Card className="border-zinc-800 bg-zinc-900">
+              <CardHeader>
+                <CardTitle className="text-white">Reports</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {reportsData.reports.map((report: any) => (
+                  <div
+                    key={report.id}
+                    className="flex items-center justify-between rounded-lg border border-zinc-800 bg-zinc-800/50 p-4"
+                  >
+                    <div className="flex items-center gap-3">
+                      <FileText className="h-8 w-8 text-emerald-500" />
+                      <div>
+                        <p className="font-medium text-white">
+                          Analysis Report
+                        </p>
+                        <p className="text-sm text-zinc-500">
+                          {format(new Date(report.created_at), "MMM d, yyyy HH:mm")} • {report.model_used}
+                        </p>
+                      </div>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleDownloadReport(report.id)}
+                      disabled={downloadingReport === report.id}
+                    >
+                      {downloadingReport === report.id ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Download className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          )}
 
           {/* Analysis Result */}
           {claim.analysis_result && (

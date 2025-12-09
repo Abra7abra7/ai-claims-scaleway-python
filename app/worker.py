@@ -230,8 +230,9 @@ def analyze_claim_with_rag(claim_id: int, prompt_id: str, user: str = "admin"):
         claim.status = models.ClaimStatus.ANALYZING.value
         db.commit()
         
-        # Determine model used from settings
-        model_used = settings.LLM_MODEL_VERSION or f"{settings.LLM_PROVIDER}-default"
+        # Get prompt config and determine model
+        prompt_config = config.get_prompt(prompt_id)
+        model_used = prompt_config.get("model", settings.LLM_MODEL_VERSION or f"{settings.LLM_PROVIDER}-default")
         
         # Log analysis start
         audit_logger.log_analysis_started(
@@ -245,8 +246,8 @@ def analyze_claim_with_rag(claim_id: int, prompt_id: str, user: str = "admin"):
         # Get RAG context
         context_string, sources = rag_service.get_context_for_claim(claim, db)
         
-        # Get prompt template
-        prompt_template = config.get_prompt(prompt_id)["template"]
+        # Get prompt template (already fetched above as prompt_config)
+        prompt_template = prompt_config["template"]
         
         # Aggregate anonymized text
         all_docs = db.query(models.ClaimDocument).filter(

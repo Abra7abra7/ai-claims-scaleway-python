@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, Play, RotateCcw, Download, Loader2, CheckCircle, AlertCircle, Brain } from "lucide-react";
+import { ArrowLeft, Play, RotateCcw, Download, Loader2, CheckCircle, AlertCircle, Brain, FileText } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -25,8 +25,10 @@ export default function AnalysisPage() {
   const [prompts, setPrompts] = useState<PromptSummary[]>([]);
   const [selectedPrompt, setSelectedPrompt] = useState<string>("");
   const [claim, setClaim] = useState<ClaimDetail | null>(null);
-  const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
+  const [analysisResult, setAnalysisResult] = useState<any | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [reports, setReports] = useState<any[]>([]);
+  const [downloadingReport, setDownloadingReport] = useState<number | null>(null);
 
   useEffect(() => {
     fetchData();
@@ -45,7 +47,7 @@ export default function AnalysisPage() {
         throw new Error("Failed to load claim");
       }
 
-      const claimData: ClaimData = await claimRes.json();
+      const claimData: ClaimDetail = await claimRes.json();
       setClaim(claimData);
 
       // Fetch prompts
@@ -60,7 +62,7 @@ export default function AnalysisPage() {
       }
 
       // Fetch analysis result if available
-      if (claimData.status === "analyzed" || claimData.analysis_result) {
+      if (claimData.status === "ANALYZED" || claimData.analysis_result) {
         try {
           const resultRes = await fetch(`${API_URL}/api/v1/claims/${claimId}/analysis/result`, {
             credentials: "include",
@@ -72,6 +74,20 @@ export default function AnalysisPage() {
           }
         } catch {
           // Analysis result not available
+        }
+
+        // Fetch reports
+        try {
+          const reportsRes = await fetch(`${API_URL}/api/v1/reports/claims/${claimId}`, {
+            credentials: "include",
+          });
+
+          if (reportsRes.ok) {
+            const reportsData = await reportsRes.json();
+            setReports(reportsData.reports || []);
+          }
+        } catch {
+          // Reports not available
         }
       }
     } catch (err: any) {
@@ -134,6 +150,29 @@ export default function AnalysisPage() {
     }
   };
 
+  const handleDownloadReport = async (reportId: number) => {
+    try {
+      setDownloadingReport(reportId);
+      const response = await fetch(`${API_URL}/api/v1/reports/${reportId}/download`, {
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to get download URL");
+      }
+
+      const data = await response.json();
+      if (data.download_url) {
+        window.open(data.download_url, "_blank");
+        toast.success("Report download started");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Failed to download report");
+    } finally {
+      setDownloadingReport(null);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -163,9 +202,9 @@ export default function AnalysisPage() {
     );
   }
 
-  const canStartAnalysis = claim.status === "ready_for_analysis";
-  const canReset = ["analyzing", "failed", "analyzed"].includes(claim.status);
-  const isAnalyzing = claim.status === "analyzing";
+  const canStartAnalysis = claim.status === "READY_FOR_ANALYSIS";
+  const canReset = ["ANALYZING", "FAILED", "ANALYZED"].includes(claim.status);
+  const isAnalyzing = claim.status === "ANALYZING";
   const hasResult = claim.analysis_result || analysisResult;
 
   return (
@@ -186,9 +225,9 @@ export default function AnalysisPage() {
         <Badge
           variant="outline"
           className={
-            claim.status === "analyzed"
+            claim.status === "ANALYZED"
               ? "text-emerald-400 border-emerald-400"
-              : claim.status === "failed"
+              : claim.status === "FAILED"
               ? "text-red-400 border-red-400"
               : "text-blue-400 border-blue-400"
           }
@@ -275,13 +314,52 @@ export default function AnalysisPage() {
         </Card>
       )}
 
+      {/* Reports */}
+      {reports.length > 0 && (
+        <Card className="border-zinc-800 bg-zinc-900">
+          <CardHeader>
+            <CardTitle className="text-white">Generated Reports</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {reports.map((report: any) => (
+              <div
+                key={report.id}
+                className="flex items-center justify-between rounded-lg border border-zinc-800 bg-zinc-800/50 p-4"
+              >
+                <div className="flex items-center gap-3">
+                  <FileText className="h-8 w-8 text-emerald-500" />
+                  <div>
+                    <p className="font-medium text-white">Analysis Report</p>
+                    <p className="text-sm text-zinc-500">
+                      {new Date(report.created_at).toLocaleString()} • {report.model_used}
+                    </p>
+                  </div>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleDownloadReport(report.id)}
+                  disabled={downloadingReport === report.id}
+                >
+                  {downloadingReport === report.id ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Download className="h-4 w-4" />
+                  )}
+                </Button>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
+
       {/* Analysis Result */}
       {hasResult && (
         <Card className="border-zinc-800 bg-zinc-900">
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle className="flex items-center gap-2">
-                {claim.status === "analyzed" ? (
+                {claim.status === "ANALYZED" ? (
                   <CheckCircle className="h-5 w-5 text-emerald-400" />
                 ) : (
                   <AlertCircle className="h-5 w-5 text-amber-400" />

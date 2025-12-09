@@ -4,6 +4,7 @@ PROMPTS = {
     "default": {
         "name": "Štandardná analýza",
         "description": "Základná analýza poistnej udalosti",
+        "model": "mistral-large-latest",
         "template": """You are an expert insurance claim adjuster. Your task is to analyze the following claim based on the provided policy documents.
 
 POLICY DOCUMENTS:
@@ -24,6 +25,7 @@ Return ONLY the JSON."""
     "detailed_medical": {
         "name": "Detailná zdravotná analýza",
         "description": "Podrobná analýza zdravotných nárokov s dôrazom na diagnózy a liečbu",
+        "model": "mistral-large-latest",
         "template": """You are a medical insurance claim specialist. Analyze the following medical claim with focus on:
 - Diagnosis codes (ICD-10)
 - Treatment procedures
@@ -50,6 +52,7 @@ Return ONLY the JSON."""
     "fraud_detection": {
         "name": "Detekcia podvodov",
         "description": "Analýza zameraná na identifikáciu podozrivých prvkov",
+        "model": "mistral-large-latest",
         "template": """You are a fraud detection specialist for insurance claims. Analyze the claim for potential red flags:
 
 POLICY DOCUMENTS:
@@ -78,6 +81,7 @@ Return ONLY the JSON."""
     "quick_review": {
         "name": "Rýchle posúdenie",
         "description": "Zjednodušená rýchla analýza pre jednoduché prípady",
+        "model": "mistral-small-latest",
         "template": """Quick insurance claim review. Provide concise assessment.
 
 CLAIM:
@@ -97,6 +101,7 @@ Return ONLY the JSON."""
     "slovak_language": {
         "name": "Slovenská analýza",
         "description": "Analýza v slovenskom jazyku",
+        "model": "mistral-large-latest",
         "template": """Si expert na poistné nároky. Analyzuj nasledujúci nárok.
 
 DOKUMENTY POISTKY:
@@ -117,14 +122,18 @@ Vráť IBA JSON."""
 
 def get_prompt_list():
     """Returns list of available prompts with metadata"""
-    return [
-        {
-            "id": key,
-            "name": value["name"],
-            "description": value["description"]
-        }
-        for key, value in PROMPTS.items()
-    ]
+    return {
+        "prompts": [
+            {
+                "id": key,
+                "name": value["name"],
+                "description": value["description"],
+                "model": value.get("model", "mistral-small-latest")
+            }
+            for key, value in PROMPTS.items()
+        ],
+        "default": "default"
+    }
 
 def get_prompt_template(prompt_id: str) -> str:
     """Returns the template for a specific prompt ID"""
