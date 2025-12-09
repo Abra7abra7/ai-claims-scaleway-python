@@ -1,188 +1,65 @@
-"use client"
+import Image from "next/image";
 
-import { useTranslations } from 'next-intl'
-import Link from 'next/link'
-import {
-  FileText,
-  Clock,
-  CheckCircle,
-  AlertCircle,
-  Plus,
-  Eye,
-  Shield,
-} from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { StatsCard } from '@/components/dashboard/stats-card'
-import { ActivityChart } from '@/components/dashboard/activity-chart'
-import { StatusDistribution } from '@/components/dashboard/status-distribution'
-import { RecentClaims } from '@/components/dashboard/recent-claims'
-import { Breadcrumbs } from '@/components/layout/breadcrumbs'
-import { Skeleton } from '@/components/ui/skeleton'
-import { useDashboardStats, useClaimStats } from '@/hooks/use-stats'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-
-export default function DashboardPage() {
-  const t = useTranslations('dashboard')
-  const { data: dashboardStats, isLoading: isLoadingDashboard } = useDashboardStats()
-  const { data: claimStats, isLoading: isLoadingStats } = useClaimStats(7)
-
-  const pendingReviewCount = dashboardStats?.by_status
-    ? (dashboardStats.by_status['OCR_REVIEW'] || 0) + (dashboardStats.by_status['ANONYMIZATION_REVIEW'] || 0)
-    : 0
-
-  const completedCount = dashboardStats?.by_status?.['ANALYZED'] || 0
-  const failedCount = dashboardStats?.by_status?.['FAILED'] || 0
-
+export default function Home() {
   return (
-    <div className="container py-6 space-y-6">
-      {/* Header */}
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">{t('title')}</h1>
-          <p className="text-muted-foreground">{t('subtitle')}</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button asChild>
-            <Link href="/claims/new">
-              <Plus className="mr-2 h-4 w-4" />
-              {t('newClaim')}
-            </Link>
-          </Button>
-        </div>
-      </div>
-
-      {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {isLoadingDashboard ? (
-          <>
-            {[...Array(4)].map((_, i) => (
-              <Card key={i}>
-                <CardHeader className="pb-2">
-                  <Skeleton className="h-4 w-24" />
-                </CardHeader>
-                <CardContent>
-                  <Skeleton className="h-8 w-16" />
-                </CardContent>
-              </Card>
-            ))}
-          </>
-        ) : (
-          <>
-            <StatsCard
-              title={t('totalClaims')}
-              value={dashboardStats?.total_claims || 0}
-              icon={FileText}
-              description={t('last30Days')}
-            />
-            <StatsCard
-              title={t('pendingReview')}
-              value={pendingReviewCount}
-              icon={Clock}
-              className={pendingReviewCount > 0 ? 'border-warning/50' : ''}
-            />
-            <StatsCard
-              title={t('completed')}
-              value={completedCount}
-              icon={CheckCircle}
-              className={completedCount > 0 ? 'border-success/50' : ''}
-            />
-            <StatsCard
-              title={t('failed')}
-              value={failedCount}
-              icon={AlertCircle}
-              className={failedCount > 0 ? 'border-destructive/50' : ''}
-            />
-          </>
-        )}
-      </div>
-
-      {/* Quick Actions */}
-      <Card>
-        <CardHeader>
-          <CardTitle>{t('quickActions')}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-wrap gap-3">
-            <Button variant="outline" asChild>
-              <Link href="/claims/new">
-                <Plus className="mr-2 h-4 w-4" />
-                {t('newClaim')}
-              </Link>
-            </Button>
-            <Button variant="outline" asChild>
-              <Link href="/claims/ocr-review">
-                <Eye className="mr-2 h-4 w-4" />
-                {t('viewOcrQueue')}
-              </Link>
-            </Button>
-            <Button variant="outline" asChild>
-              <Link href="/claims/anonymization-review">
-                <Shield className="mr-2 h-4 w-4" />
-                {t('viewAnonQueue')}
-              </Link>
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Charts */}
-      <div className="grid gap-6 lg:grid-cols-2">
-        {isLoadingStats ? (
-          <>
-            <Card>
-              <CardHeader>
-                <Skeleton className="h-6 w-32" />
-              </CardHeader>
-              <CardContent>
-                <Skeleton className="h-[300px] w-full" />
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader>
-                <Skeleton className="h-6 w-32" />
-              </CardHeader>
-              <CardContent>
-                <Skeleton className="h-[300px] w-full" />
-              </CardContent>
-            </Card>
-          </>
-        ) : (
-          <>
-            <ActivityChart
-              title={t('recentActivity')}
-              description={t('last7Days')}
-              data={claimStats?.daily_counts || []}
-            />
-            {dashboardStats?.by_status && (
-              <StatusDistribution
-                title={t('processingStats')}
-                data={dashboardStats.by_status}
-              />
-            )}
-          </>
-        )}
-      </div>
-
-      {/* Recent Claims */}
-      {isLoadingDashboard ? (
-        <Card>
-          <CardHeader>
-            <Skeleton className="h-6 w-32" />
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {[...Array(5)].map((_, i) => (
-                <Skeleton key={i} className="h-16 w-full" />
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      ) : (
-        <RecentClaims
-          title={t('recentActivity')}
-          claims={dashboardStats?.recent_claims || []}
+    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
+      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
+        <Image
+          className="dark:invert"
+          src="/next.svg"
+          alt="Next.js logo"
+          width={100}
+          height={20}
+          priority
         />
-      )}
+        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
+          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
+            To get started, edit the page.tsx file.
+          </h1>
+          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
+            Looking for a starting point or more instructions? Head over to{" "}
+            <a
+              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
+              className="font-medium text-zinc-950 dark:text-zinc-50"
+            >
+              Templates
+            </a>{" "}
+            or the{" "}
+            <a
+              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
+              className="font-medium text-zinc-950 dark:text-zinc-50"
+            >
+              Learning
+            </a>{" "}
+            center.
+          </p>
+        </div>
+        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
+          <a
+            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
+            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <Image
+              className="dark:invert"
+              src="/vercel.svg"
+              alt="Vercel logomark"
+              width={16}
+              height={16}
+            />
+            Deploy Now
+          </a>
+          <a
+            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
+            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Documentation
+          </a>
+        </div>
+      </main>
     </div>
-  )
+  );
 }

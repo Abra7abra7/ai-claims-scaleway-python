@@ -44,12 +44,11 @@ def process_claim_ocr(document_id: int):
         if not document:
             return "Document not found"
 
-        # Download file from S3/MinIO and send as base64
-        # This works with local MinIO since we don't need external URL access
-        file_bytes = storage_service.download_file_bytes(document.s3_key)
-        
-        # OCR with Mistral using base64
-        ocr_text = ocr_service.extract_text_from_bytes(file_bytes, document.filename)
+        # Generate Presigned URL for Mistral OCR
+        presigned_url = storage_service.generate_presigned_url(document.s3_key)
+
+        # OCR with Mistral
+        ocr_text = ocr_service.extract_text_from_url(presigned_url)
         document.original_text = ocr_text
         db.commit()
         

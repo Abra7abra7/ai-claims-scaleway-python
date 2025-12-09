@@ -82,16 +82,3 @@ class StorageService:
             self.s3_client.download_file(self.bucket_name, s3_key, local_path)
         except Exception as e:
             raise Exception(f"Failed to download file: {str(e)}")
-    
-    def download_file_bytes(self, s3_key: str) -> bytes:
-        """
-        Downloads a file from S3 and returns its content as bytes.
-        """
-        try:
-            from io import BytesIO
-            buffer = BytesIO()
-            self.s3_client.download_fileobj(self.bucket_name, s3_key, buffer)
-            buffer.seek(0)
-            return buffer.read()
-        except Exception as e:
-            raise Exception(f"Failed to download file: {str(e)}")

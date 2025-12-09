@@ -11,20 +11,14 @@ presidio:
   api_url: "http://presidio:8001"
   countries:
     SK:
-      # Pre SK vypíname anglický NER a používame len regex
-      disable_english_ner: true
       recognizers:
         rodne_cislo:
-          # Slovenské rodné číslo: YYMMDD/XXXX alebo YYMMDDXXXX
           pattern: '\b\d{6}[/]?\d{3,4}\b'
-          score: 0.95
+          score: 0.9
         iban:
-          # Slovenský IBAN (s medzerami alebo bez)
-          pattern: '\bSK\d{2}[ ]?\d{4}[ ]?\d{4}[ ]?\d{4}[ ]?\d{4}[ ]?\d{0,4}\b'
+          pattern: '\bSK\d{2}[ ]?\d{4}[ ]?\d{4}[ ]?\d{4}[ ]?\d{4}\b'
           score: 1.0
-        # Slovenské mená s titulom sú detekované v presidio-api/app.py
     IT:
-      disable_english_ner: true
       recognizers:
         codice_fiscale:
           pattern: '\b[A-Z]{6}\d{2}[A-Z]\d{2}[A-Z]\d{3}[A-Z]\b'
@@ -33,7 +27,6 @@ presidio:
           pattern: '\bIT\d{2}[A-Z]\d{10}[A-Z0-9]{12}\b'
           score: 1.0
     DE:
-      disable_english_ner: true
       recognizers:
         steuer_id:
           pattern: '\b\d{11}\b'
