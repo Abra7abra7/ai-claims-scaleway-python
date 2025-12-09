@@ -328,29 +328,34 @@ class RAGService:
         
         return query.all()
     
-    def get_folder_structure(self, db: Session) -> Dict[str, List[str]]:
+    def get_folder_structure(self, db: Session) -> Dict[str, Dict[str, int]]:
         """
-        Get hierarchical folder structure of RAG documents.
+        Get hierarchical folder structure with document counts.
         
         Args:
             db: Database session
             
         Returns:
-            Dictionary: {country: [document_types]}
+            Dictionary: {country: {document_type: count}}
         """
         result = db.execute(
-            text("SELECT DISTINCT country, document_type FROM rag_documents ORDER BY country, document_type")
+            text("""
+                SELECT country, document_type, COUNT(*) as count 
+                FROM rag_documents 
+                GROUP BY country, document_type 
+                ORDER BY country, document_type
+            """)
         )
         
         structure = {}
         for row in result:
             country = row[0]
             doc_type = row[1]
+            count = row[2]
             
             if country not in structure:
-                structure[country] = []
+                structure[country] = {}
             
-            if doc_type not in structure[country]:
-                structure[country].append(doc_type)
+            structure[country][doc_type] = count
         
         return structure

@@ -58,8 +58,8 @@ class RAGUploadResponse(BaseModel):
 
 
 class RAGFolderStructure(BaseModel):
-    """Folder structure for RAG documents."""
-    countries: dict[str, dict[str, list[str]]]
+    """Folder structure for RAG documents with counts."""
+    countries: dict[str, dict[str, int]]
 
 
 # ==================== Query Schemas ====================

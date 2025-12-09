@@ -150,10 +150,12 @@ export default function RAGPage() {
         method: "POST",
         credentials: "include",
         body: formData,
+        // Note: Don't set Content-Type header - browser will set it with boundary
       });
 
       if (!response.ok) {
-        throw new Error("Upload failed");
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.detail || `Upload failed: ${response.status}`);
       }
 
       toast.success("Document uploaded successfully");
@@ -161,7 +163,8 @@ export default function RAGPage() {
       setUploadFile(null);
       fetchData();
     } catch (err: any) {
-      toast.error(err.message);
+      console.error("Upload error:", err);
+      toast.error(err.message || "Upload failed");
     } finally {
       setUploading(false);
     }
