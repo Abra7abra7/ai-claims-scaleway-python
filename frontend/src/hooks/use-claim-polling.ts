@@ -22,17 +22,8 @@ export function useClaimPolling({ claimId, enabled = true }: UseClaimPollingOpti
   const queryClient = useQueryClient();
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  const { data: claim } = useQuery({
-    queryKey: ["claim", claimId],
-    queryFn: async () => {
-      const { data, error } = await api.GET("/api/v1/claims/{claim_id}", {
-        params: { path: { claim_id: claimId } },
-      });
-      if (error) throw error;
-      return data;
-    },
-    enabled,
-  });
+  // Get claim from cache (should already be fetched by parent component)
+  const claim = queryClient.getQueryData<any>(["claim", claimId]);
 
   const shouldPoll = claim && PROCESSING_STATUSES.includes(claim.status);
 
@@ -58,6 +49,6 @@ export function useClaimPolling({ claimId, enabled = true }: UseClaimPollingOpti
     };
   }, [enabled, shouldPoll, claimId, queryClient]);
 
-  return { claim, isPolling: !!intervalRef.current };
+  return { isPolling: !!intervalRef.current };
 }
 

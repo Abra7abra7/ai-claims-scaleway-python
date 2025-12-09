@@ -77,10 +77,8 @@ export function ClaimDetail({ claimId }: ClaimDetailProps) {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [previewDocument, setPreviewDocument] = useState<any | null>(null);
 
-  // Use polling hook for real-time updates
-  const { claim, isPolling } = useClaimPolling({ claimId });
-  
-  const { isLoading, error } = useQuery({
+  // Fetch claim data
+  const { data: claim, isLoading, error } = useQuery({
     queryKey: ["claim", claimId],
     queryFn: async () => {
       const { data, error } = await api.GET("/api/v1/claims/{claim_id}", {
@@ -90,6 +88,9 @@ export function ClaimDetail({ claimId }: ClaimDetailProps) {
       return data;
     },
   });
+
+  // Use polling hook for real-time updates (uses same query key)
+  const { isPolling } = useClaimPolling({ claimId });
 
   const handleDelete = async () => {
     try {
