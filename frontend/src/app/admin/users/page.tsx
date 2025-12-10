@@ -120,7 +120,7 @@ export default function AdminUsersPage() {
     }
   };
 
-  const formatDate = (dateStr: string | null) => {
+  const formatDate = (dateStr: string | null | undefined) => {
     if (!dateStr) return "—";
     return new Date(dateStr).toLocaleDateString("sk-SK", {
       day: "2-digit",
