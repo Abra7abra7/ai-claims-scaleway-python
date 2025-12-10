@@ -153,19 +153,9 @@ export default function AnalysisPage() {
   const handleDownloadReport = async (reportId: number) => {
     try {
       setDownloadingReport(reportId);
-      const response = await fetch(`${API_URL}/api/v1/reports/${reportId}/download`, {
-        credentials: "include",
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to get download URL");
-      }
-
-      const data = await response.json();
-      if (data.download_url) {
-        window.open(data.download_url, "_blank");
-        toast.success("Report download started");
-      }
+      // Direct download - otvori PDF v novom okne
+      window.open(`${API_URL}/api/v1/reports/${reportId}/download`, "_blank");
+      toast.success("Report download started");
     } catch (err: any) {
       toast.error(err.message || "Failed to download report");
     } finally {
