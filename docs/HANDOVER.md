@@ -548,7 +548,7 @@ app.add_middleware(
 **NIKDY necommitovať `.env` do Git!**
 
 Prečo?
-- Obsahuje API keys (Mistral, Gemini)
+- Obsahuje API keys (Mistral - GDPR compliant)
 - SMTP password
 - Database credentials
 - S3 secrets
@@ -578,10 +578,12 @@ Vytvor `.env` súbor v root directory:
 # Database
 DATABASE_URL=postgresql://claims_user:claims_password@db:5432/claims_db
 
-# AI Providers (aspoň jeden)
+# AI Providers (Mistral recommended - GDPR compliant)
 MISTRAL_API_KEY=your-mistral-api-key
-GEMINI_API_KEY=your-gemini-api-key
-LLM_PROVIDER=gemini
+LLM_PROVIDER=mistral
+
+# Alternative providers (optional)
+# GEMINI_API_KEY=your-gemini-api-key
 
 # MinIO (lokálny vývoj)
 S3_ACCESS_KEY=minioadmin

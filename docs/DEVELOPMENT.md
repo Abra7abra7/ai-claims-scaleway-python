@@ -39,7 +39,7 @@ cd ai-claims-scaleway-python
 
 # 2. Vytvor .env súbor
 cp .env.example .env
-# Vyplň: SMTP_*, MISTRAL_API_KEY alebo GEMINI_API_KEY
+# Vyplň: SMTP_*, MISTRAL_API_KEY (GDPR compliant)
 
 # 3. Spusti Docker služby
 docker-compose up -d
@@ -55,11 +55,12 @@ docker-compose exec backend python scripts/init_admin.py
 Minimálne potrebné pre lokálny vývoj:
 
 ```env
-# AI Provider (aspoň jeden)
-MISTRAL_API_KEY=your-key
-# alebo
-GEMINI_API_KEY=your-key
-LLM_PROVIDER=gemini
+# AI Provider (Mistral - GDPR compliant)
+MISTRAL_API_KEY=your-mistral-key
+LLM_PROVIDER=mistral
+
+# Alternative (optional)
+# GEMINI_API_KEY=your-key
 
 # Email (SMTP) - POVINNÉ!
 SMTP_HOST=smtp.gmail.com

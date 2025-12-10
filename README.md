@@ -18,7 +18,7 @@ Inteligentný systém pre regulované prostredie poisťovne s automatizovaným s
 - **🧹 Data Cleaning** - Pravidlové čistenie a normalizácia OCR výstupu
 - **🔒 GDPR Anonymizácia** - Country-specific anonymizácia pomocou Microsoft Presidio (SK, IT, DE)
 - **👤 Human-in-the-Loop** - Manuálne kontrolné body pre OCR a anonymizáciu
-- **🤖 AI Analýza** - RAG-enhanced analýza s podporou viacerých AI providerov (Mistral, Gemini, OpenAI)
+- **🤖 AI Analýza** - RAG-enhanced analýza s podporou viacerých AI providerov (Mistral - GDPR compliant, Gemini, OpenAI)
 - **📄 PDF Reporty** - Automatické generovanie structured PDF reportov
 - **📊 Audit Logging** - Kompletný audit trail všetkých zmien (GDPR compliant)
 - **☁️ Scaleway Integration** - Managed PostgreSQL + S3 Object Storage
@@ -62,7 +62,7 @@ cd ai-claims-scaleway-python
 
 # 2. Nakonfiguruj .env súbor
 cp .env.example .env
-# Vyplň: SMTP credentials, API keys (Mistral/Gemini)
+# Vyplň: SMTP credentials, MISTRAL_API_KEY (GDPR compliant)
 
 # 3. Spusti Docker služby
 docker-compose up -d
@@ -121,7 +121,7 @@ Kompletný deployment návod: [`docs/PRODUCTION_DEPLOYMENT.md`](docs/PRODUCTION_
 | **Database** | PostgreSQL 16 + pgvector extension |
 | **Storage** | MinIO (S3-compatible) / Scaleway Object Storage |
 | **Queue** | Redis 7 + Celery 5 |
-| **AI Services** | Mistral AI, Google Gemini, OpenAI, Microsoft Presidio |
+| **AI Services** | Mistral AI (GDPR), Google Gemini, OpenAI, Microsoft Presidio |
 | **Infrastructure** | Docker + Docker Compose |
 | **Current Hosting** | IBM Server v Novis (10.85.55.26) |
 

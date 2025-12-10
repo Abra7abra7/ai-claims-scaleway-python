@@ -14,7 +14,7 @@ if (-not (Test-Path .env.local)) {
         Write-Host "`n✅ Created .env.local" -ForegroundColor Green
         Write-Host "⚠️  IMPORTANT: Edit .env.local with your API keys!`n" -ForegroundColor Yellow
         Write-Host "   1. Open .env.local in editor" -ForegroundColor Gray
-        Write-Host "   2. Add your GEMINI_API_KEY or MISTRAL_API_KEY" -ForegroundColor Gray
+        Write-Host "   2. Add your MISTRAL_API_KEY (GDPR compliant)" -ForegroundColor Gray
         Write-Host "   3. Run this script again`n" -ForegroundColor Gray
         exit 1
     } else {

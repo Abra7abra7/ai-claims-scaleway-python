@@ -14,10 +14,11 @@ notepad .env.local
 
 **Dôležité nastavenia v `.env.local`:**
 ```bash
-# Pridaj svoje API keys:
-GEMINI_API_KEY=tvoj_skutocny_key_sem
-# alebo
-MISTRAL_API_KEY=tvoj_skutocny_key_sem
+# Pridaj Mistral API key (RECOMMENDED - GDPR compliant):
+MISTRAL_API_KEY=tvoj_skutocny_mistral_key_sem
+
+# Alternative (optional):
+# GEMINI_API_KEY=tvoj_gemini_key_sem
 
 # Vygeneruj secret (v PowerShell):
 # [Convert]::ToBase64String([System.Security.Cryptography.RandomNumberGenerator]::GetBytes(32))
@@ -256,8 +257,8 @@ notepad .env.local
 ```
 
 ```bash
-# Pridaj svoj API key
-GEMINI_API_KEY=AIzaSy...tvoj_skutocny_key
+# Pridaj Mistral API key (RECOMMENDED - GDPR compliant)
+MISTRAL_API_KEY=tvoj_mistral_key_sem
 
 # Vygeneruj secret v PowerShell:
 # [Convert]::ToBase64String([System.Security.Cryptography.RandomNumberGenerator]::GetBytes(32))

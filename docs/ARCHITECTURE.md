@@ -31,7 +31,7 @@ This document provides a comprehensive technical overview of the AI Claims Proce
 | **Database** | PostgreSQL 16 + pgvector extension |
 | **Queue** | Redis 7 + Celery 5 |
 | **Storage** | MinIO (S3-compatible) or Scaleway Object Storage |
-| **AI Services** | Mistral AI, Google Gemini, OpenAI, Microsoft Presidio |
+| **AI Services** | Mistral AI (GDPR), Google Gemini, OpenAI, Microsoft Presidio |
 | **Deployment** | Docker + Docker Compose |
 
 ### Architecture Diagram

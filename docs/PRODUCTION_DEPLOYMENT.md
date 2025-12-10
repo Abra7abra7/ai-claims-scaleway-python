@@ -111,9 +111,9 @@ docker-compose logs backend | tail -50
 # Database
 DATABASE_URL=postgresql://claims_user:claims_password@db:5432/claims_db
 
-# LLM Provider
-LLM_PROVIDER=gemini
-GEMINI_API_KEY=your_actual_gemini_api_key
+# LLM Provider (Mistral - GDPR compliant)
+LLM_PROVIDER=mistral
+MISTRAL_API_KEY=your_actual_mistral_api_key
 
 # S3 Storage
 S3_ACCESS_KEY=minioadmin
@@ -238,7 +238,7 @@ docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
 
 - [ ] Zmenené default heslá v `.env`
 - [ ] `SECRET_KEY` je unikátny a min. 32 znakov
-- [ ] `GEMINI_API_KEY` je nastavený
+- [ ] `MISTRAL_API_KEY` je nastavený (GDPR compliant)
 - [ ] HTTPS je nakonfigurované (nginx/caddy)
 - [ ] Firewall povoľuje len potrebné porty
 - [ ] Database backupy sú nastavené

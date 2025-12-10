@@ -100,7 +100,7 @@ make db-backup         # Backup databázy
 ```bash
 DATABASE_URL=postgresql://...
 BETTER_AUTH_SECRET=...      # Generate: openssl rand -base64 32
-GEMINI_API_KEY=...          # Alebo MISTRAL_API_KEY
+MISTRAL_API_KEY=...         # RECOMMENDED - GDPR compliant (Gemini ako fallback)
 ```
 
 ### Storage (MinIO / Scaleway)
