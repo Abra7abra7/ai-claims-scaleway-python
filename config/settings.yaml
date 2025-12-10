@@ -9,15 +9,31 @@ llm:
 
 presidio:
   api_url: "http://presidio:8001"
+  # Nizsi threshold = viac detekcii (default 0.5)
+  score_threshold: 0.35
   countries:
     SK:
       recognizers:
+        # Rodne cislo - format 850615/1234 alebo 8506151234
         rodne_cislo:
           pattern: '\b\d{6}[/]?\d{3,4}\b'
-          score: 0.9
+          score: 0.95
+        # IBAN - SK format s medzerami alebo bez
         iban:
           pattern: '\bSK\d{2}[ ]?\d{4}[ ]?\d{4}[ ]?\d{4}[ ]?\d{4}\b'
           score: 1.0
+        # PSC - 5 cislic, moze byt s medzerou (851 01)
+        psc:
+          pattern: '\b\d{3}[ ]?\d{2}\b'
+          score: 0.6
+        # Telefon SK - +421 alebo 0 prefix
+        telefon_sk:
+          pattern: '(\+421|00421|0)[ ]?(9\d{2}|[1-9]\d)[ ]?\d{3}[ ]?\d{3}\b'
+          score: 0.9
+        # Cislo domu v adrese (napr. "Hlavna 15", "ul. Dlha 123/45")
+        cislo_domu:
+          pattern: '\b\d{1,4}[/]?\d{0,4}\b(?=\s*,|\s*$|\s+\d{3}[ ]?\d{2})'
+          score: 0.4
     IT:
       recognizers:
         codice_fiscale:
