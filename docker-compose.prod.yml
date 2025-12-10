@@ -58,13 +58,16 @@ services:
           memory: 256M
 
   # ==================== PRESIDIO ====================
+  # Multilingual NLP models need more RAM (SK, IT, DE, EN)
   presidio:
     restart: always
     deploy:
       resources:
         limits:
-          cpus: '0.5'
-          memory: 512M
+          cpus: '1.0'
+          memory: 1.5G
+        reservations:
+          memory: 1G
 
   # ==================== MINIO ====================
   minio:

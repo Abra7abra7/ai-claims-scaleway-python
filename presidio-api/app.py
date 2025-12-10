@@ -1,6 +1,7 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from presidio_analyzer import AnalyzerEngine, PatternRecognizer, Pattern
+from presidio_analyzer.nlp_engine import NlpEngineProvider
 from presidio_anonymizer import AnonymizerEngine
 from presidio_anonymizer.entities import OperatorConfig
 import yaml
@@ -9,16 +10,32 @@ import os
 
 app = FastAPI(title="Presidio Anonymization API")
 
-# Global instances
-analyzer = None
+# Global instances - CACHE pre analyzers (setri RAM a CPU)
+analyzer_cache: Dict[str, AnalyzerEngine] = {}
 anonymizer = None
 config = None
+
+# Mapovanie krajiny na jazyk
+COUNTRY_LANGUAGE_MAP = {
+    "SK": "xx",   # Multilingual (slovencina nie je v spaCy priamo)
+    "IT": "it",   # Taliancina
+    "DE": "de",   # Nemcina
+    "EN": "en",   # Anglictina
+}
+
+# Mapovanie jazyka na spaCy model
+LANGUAGE_MODEL_MAP = {
+    "xx": "xx_ent_wiki_sm",   # Multilingual
+    "it": "it_core_news_sm",
+    "de": "de_core_news_sm",
+    "en": "en_core_web_sm",
+}
 
 
 class AnonymizeRequest(BaseModel):
     text: str
     country: str
-    language: str = "en"
+    language: Optional[str] = None  # Ak None, pouzije sa podla country
 
 
 class AnonymizeResponse(BaseModel):
@@ -30,7 +47,6 @@ def load_config():
     """Load configuration from YAML file"""
     config_path = os.getenv("CONFIG_PATH", "/app/config/settings.yaml")
     if not os.path.exists(config_path):
-        # Return default config if file doesn't exist
         return {
             "presidio": {
                 "countries": {
@@ -45,30 +61,73 @@ def load_config():
         return yaml.safe_load(f)
 
 
-def create_recognizer(entity_name: str, pattern: str, score: float = 0.9) -> PatternRecognizer:
+def create_recognizer(entity_name: str, pattern: str, score: float = 0.9, language: str = "xx") -> PatternRecognizer:
     """Create a custom pattern recognizer"""
     pattern_obj = Pattern(name=f"{entity_name}_pattern", regex=pattern, score=score)
-    return PatternRecognizer(
+    recognizer = PatternRecognizer(
         supported_entity=entity_name,
-        patterns=[pattern_obj]
+        patterns=[pattern_obj],
+        supported_language=language
     )
+    return recognizer
 
 
-def initialize_analyzer(country: str):
-    """Initialize analyzer with country-specific recognizers"""
-    global analyzer, config
+def get_analyzer(country: str, language: Optional[str] = None) -> AnalyzerEngine:
+    """Get or create cached analyzer for country/language"""
+    global analyzer_cache, config
+    
+    # Urcit jazyk
+    if language is None:
+        language = COUNTRY_LANGUAGE_MAP.get(country, "xx")
+    
+    cache_key = f"{country}_{language}"
+    
+    if cache_key in analyzer_cache:
+        return analyzer_cache[cache_key]
     
     if config is None:
         config = load_config()
     
-    analyzer_engine = AnalyzerEngine()
+    # Vytvorit NLP engine s multilingvalnym modelom
+    model_name = LANGUAGE_MODEL_MAP.get(language, "xx_ent_wiki_sm")
     
-    # Get country configuration
+    # Konfiguracia pre NLP engine
+    nlp_configuration = {
+        "nlp_engine_name": "spacy",
+        "models": [
+            {"lang_code": language, "model_name": model_name}
+        ]
+    }
+    
+    try:
+        nlp_engine = NlpEngineProvider(nlp_configuration=nlp_configuration).create_engine()
+        
+        # Vytvorit AnalyzerEngine s custom NLP engine
+        analyzer_engine = AnalyzerEngine(
+            nlp_engine=nlp_engine,
+            supported_languages=[language]
+        )
+    except Exception as e:
+        print(f"Warning: Could not load model for {language}, falling back to xx: {e}")
+        # Fallback na multilingual model
+        nlp_configuration = {
+            "nlp_engine_name": "spacy",
+            "models": [
+                {"lang_code": "xx", "model_name": "xx_ent_wiki_sm"}
+            ]
+        }
+        nlp_engine = NlpEngineProvider(nlp_configuration=nlp_configuration).create_engine()
+        analyzer_engine = AnalyzerEngine(
+            nlp_engine=nlp_engine,
+            supported_languages=["xx"]
+        )
+        language = "xx"
+    
+    # Pridat country-specific recognizers
     presidio_config = config.get("presidio", {})
     countries = presidio_config.get("countries", {})
     country_config = countries.get(country, {})
     
-    # Add country-specific recognizers
     recognizers_config = country_config.get("recognizers", {})
     for entity_name, entity_config in recognizers_config.items():
         if isinstance(entity_config, dict):
@@ -78,29 +137,54 @@ def initialize_analyzer(country: str):
                 recognizer = create_recognizer(
                     entity_name.upper(),
                     pattern,
-                    score
+                    score,
+                    language
                 )
                 analyzer_engine.registry.add_recognizer(recognizer)
     
+    # Cache
+    analyzer_cache[cache_key] = analyzer_engine
+    print(f"Created and cached analyzer for {country} ({language})")
     return analyzer_engine
 
 
 @app.on_event("startup")
 async def startup_event():
-    """Initialize services on startup"""
+    """Initialize services on startup - preload common analyzers"""
     global anonymizer, config
     anonymizer = AnonymizerEngine()
     config = load_config()
+    
+    print("Presidio API starting up...")
+    print(f"Supported countries: {list(COUNTRY_LANGUAGE_MAP.keys())}")
+    
+    # Preload analyzers for faster first request
+    for country in ["SK", "IT", "DE"]:
+        try:
+            get_analyzer(country)
+            print(f"Preloaded analyzer for {country}")
+        except Exception as e:
+            print(f"Warning: Could not preload analyzer for {country}: {e}")
+    
+    print("Presidio API ready!")
 
 
 @app.get("/")
 def read_root():
-    return {"service": "Presidio Anonymization API", "status": "running"}
+    return {
+        "service": "Presidio Anonymization API",
+        "status": "running",
+        "supported_countries": list(COUNTRY_LANGUAGE_MAP.keys()),
+        "cached_analyzers": list(analyzer_cache.keys())
+    }
 
 
 @app.get("/health")
 def health_check():
-    return {"status": "healthy"}
+    return {
+        "status": "healthy",
+        "cached_analyzers": len(analyzer_cache)
+    }
 
 
 @app.post("/anonymize", response_model=AnonymizeResponse)
@@ -109,19 +193,22 @@ def anonymize_text(request: AnonymizeRequest):
     Anonymize text using Presidio with country-specific recognizers.
     
     Args:
-        request: AnonymizeRequest with text, country, and language
+        request: AnonymizeRequest with text, country, and optional language
         
     Returns:
         AnonymizeResponse with anonymized text and found entities
     """
     try:
-        # Initialize analyzer with country-specific recognizers
-        country_analyzer = initialize_analyzer(request.country)
+        # Urcit jazyk
+        language = request.language or COUNTRY_LANGUAGE_MAP.get(request.country, "xx")
+        
+        # Pouzit cached analyzer
+        country_analyzer = get_analyzer(request.country, language)
         
         # Analyze text
         results = country_analyzer.analyze(
             text=request.text,
-            language=request.language
+            language=language
         )
         
         # Define operators for anonymization
@@ -130,6 +217,10 @@ def anonymize_text(request: AnonymizeRequest):
             "PERSON": OperatorConfig("replace", {"new_value": "<OSOBA>"}),
             "PHONE_NUMBER": OperatorConfig("replace", {"new_value": "<TELEFON>"}),
             "EMAIL_ADDRESS": OperatorConfig("replace", {"new_value": "<EMAIL>"}),
+            "LOCATION": OperatorConfig("replace", {"new_value": "<MIESTO>"}),
+            "DATE_TIME": OperatorConfig("replace", {"new_value": "<DATUM>"}),
+            "NRP": OperatorConfig("replace", {"new_value": "<NARODNOST>"}),
+            "CREDIT_CARD": OperatorConfig("replace", {"new_value": "<KARTA>"}),
         }
         
         # Add country-specific operators
@@ -172,20 +263,13 @@ def anonymize_text(request: AnonymizeRequest):
 
 @app.get("/countries")
 def get_supported_countries():
-    """Get list of supported countries"""
-    global config
-    if config is None:
-        config = load_config()
-    
-    presidio_config = config.get("presidio", {})
-    countries = presidio_config.get("countries", {})
-    
+    """Get list of supported countries and their languages"""
     return {
-        "countries": list(countries.keys())
+        "countries": COUNTRY_LANGUAGE_MAP,
+        "cached_analyzers": list(analyzer_cache.keys())
     }
 
 
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8001)
-

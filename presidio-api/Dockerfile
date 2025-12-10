@@ -14,8 +14,15 @@ COPY requirements.txt .
 # Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Download spaCy language model for Presidio
-RUN python -m spacy download en_core_web_lg
+# Download spaCy language models for Presidio
+# Multilingual model for SK and general use (smaller, ~50MB)
+RUN python -m spacy download xx_ent_wiki_sm
+# German model for DE
+RUN python -m spacy download de_core_news_sm
+# Italian model for IT  
+RUN python -m spacy download it_core_news_sm
+# English model (small version for less RAM)
+RUN python -m spacy download en_core_web_sm
 
 # Copy application code
 COPY app.py .
