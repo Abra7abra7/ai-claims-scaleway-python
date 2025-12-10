@@ -39,7 +39,6 @@ export type RAGUploadResponse = components["schemas"]["RAGUploadResponse"];
 // ==================== Reports ====================
 export type ReportSummary = components["schemas"]["ReportSummary"];
 export type ReportListResponse = components["schemas"]["ReportListResponse"];
-export type ReportDownloadResponse = components["schemas"]["ReportDownloadResponse"];
 
 // ==================== Prompts ====================
 export type PromptSummary = components["schemas"]["PromptSummary"];
@@ -77,7 +76,6 @@ export type Country = components["schemas"]["Country"];
 export type PasswordResetRequest = components["schemas"]["PasswordResetRequest"];
 export type PasswordResetConfirm = components["schemas"]["PasswordResetConfirm"];
 export type EmailVerificationRequest = components["schemas"]["EmailVerificationRequest"];
-export type EmailVerificationConfirm = components["schemas"]["EmailVerificationConfirm"];
 
 // ==================== Operations (for API client) ====================
 export type Operations = operations;

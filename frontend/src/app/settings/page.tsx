@@ -103,7 +103,7 @@ export default function SettingsPage() {
     }
   };
 
-  const formatDate = (dateStr: string | null) => {
+  const formatDate = (dateStr: string | null | undefined) => {
     if (!dateStr) return "Never";
     return new Date(dateStr).toLocaleDateString("sk-SK", {
       day: "2-digit",

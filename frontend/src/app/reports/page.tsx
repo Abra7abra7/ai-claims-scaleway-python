@@ -103,7 +103,8 @@ export default function ReportsPage() {
     }
   };
 
-  const formatDate = (dateStr: string) => {
+  const formatDate = (dateStr: string | null | undefined) => {
+    if (!dateStr) return "—";
     return new Date(dateStr).toLocaleDateString("sk-SK", {
       day: "2-digit",
       month: "short",

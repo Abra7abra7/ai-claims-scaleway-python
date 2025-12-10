@@ -109,7 +109,7 @@ export default function SessionsPage() {
     }
   };
 
-  const parseUserAgent = (ua: string | null) => {
+  const parseUserAgent = (ua: string | null | undefined) => {
     if (!ua) return { device: "Unknown", browser: "Unknown" };
 
     const isMobile = /mobile|android|iphone|ipad/i.test(ua);
@@ -131,7 +131,8 @@ export default function SessionsPage() {
     return { device, browser, os };
   };
 
-  const formatDate = (dateStr: string) => {
+  const formatDate = (dateStr: string | null | undefined) => {
+    if (!dateStr) return "—";
     const date = new Date(dateStr);
     const now = new Date();
     const diff = now.getTime() - date.getTime();

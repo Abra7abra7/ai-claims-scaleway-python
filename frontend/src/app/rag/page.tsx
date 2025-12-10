@@ -187,7 +187,8 @@ export default function RAGPage() {
     }
   };
 
-  const formatDate = (dateStr: string) => {
+  const formatDate = (dateStr: string | null | undefined) => {
+    if (!dateStr) return "—";
     return new Date(dateStr).toLocaleDateString("sk-SK", {
       year: "numeric",
       month: "short",

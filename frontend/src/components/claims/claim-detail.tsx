@@ -88,10 +88,10 @@ export function ClaimDetail({ claimId }: ClaimDetailProps) {
       if (error) throw error;
       return data;
     },
-    refetchInterval: (data) => {
+    refetchInterval: (query) => {
       // Poll every 3 seconds if claim is being processed
       const processingStatuses = ["PROCESSING", "CLEANING", "ANONYMIZING", "ANALYZING"];
-      return data && processingStatuses.includes(data.status) ? 3000 : false;
+      return query.state.data && processingStatuses.includes(query.state.data.status) ? 3000 : false;
     },
   });
 
@@ -295,7 +295,7 @@ export function ClaimDetail({ claimId }: ClaimDetailProps) {
           </CardHeader>
           <CardContent>
             <div className="text-white">
-              {claim.analysis_model || "-"}
+              {String(claim.analysis_model ?? "-")}
             </div>
           </CardContent>
         </Card>
@@ -380,7 +380,7 @@ export function ClaimDetail({ claimId }: ClaimDetailProps) {
           )}
 
           {/* Analysis Result */}
-          {claim.analysis_result && (
+          {claim.analysis_result != null && (
             <Card className="border-zinc-800 bg-zinc-900">
               <CardHeader>
                 <CardTitle className="text-white">{t("analysis")}</CardTitle>
@@ -388,7 +388,7 @@ export function ClaimDetail({ claimId }: ClaimDetailProps) {
               <CardContent>
                 <pre className="rounded-lg bg-zinc-800 p-4 text-sm text-zinc-300 overflow-auto">
                   {typeof claim.analysis_result === "string"
-                    ? claim.analysis_result
+                    ? String(claim.analysis_result)
                     : JSON.stringify(claim.analysis_result, null, 2)}
                 </pre>
               </CardContent>

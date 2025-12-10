@@ -93,7 +93,7 @@ export function ActivityTimeline({ claimId, className }: ActivityTimelineProps) 
     );
   }
 
-  const activities = auditTrail?.activities || [];
+  const activities = auditTrail?.events || [];
 
   return (
     <Card className={cn("border-zinc-800 bg-zinc-900", className)}>
@@ -156,7 +156,7 @@ export function ActivityTimeline({ claimId, className }: ActivityTimelineProps) 
                           )}
                         </div>
                         <time className="text-xs text-zinc-500">
-                          {format(new Date(activity.timestamp), "MMM d, HH:mm")}
+                          {activity.timestamp ? format(new Date(activity.timestamp), "MMM d, HH:mm") : "—"}
                         </time>
                       </div>
                     </div>

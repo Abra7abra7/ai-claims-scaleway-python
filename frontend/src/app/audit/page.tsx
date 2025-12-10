@@ -108,7 +108,8 @@ export default function AuditPage() {
     }
   };
 
-  const formatTimestamp = (ts: string) => {
+  const formatTimestamp = (ts: string | null | undefined) => {
+    if (!ts) return "—";
     const date = new Date(ts);
     return date.toLocaleString("sk-SK", {
       day: "2-digit",
@@ -120,7 +121,7 @@ export default function AuditPage() {
     });
   };
 
-  const formatChanges = (changes: Record<string, any> | null) => {
+  const formatChanges = (changes: Record<string, any> | null | undefined) => {
     if (!changes) return "—";
     
     const entries = Object.entries(changes);
