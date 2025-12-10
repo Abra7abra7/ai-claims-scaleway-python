@@ -6,7 +6,9 @@ param(
     [string]$Service = ""
 )
 
-Write-Host "`n📋 Viewing logs...`n" -ForegroundColor Cyan
+Write-Host ""
+Write-Host "[LOGS] Viewing logs..." -ForegroundColor Cyan
+Write-Host ""
 
 if ($Service -eq "") {
     Write-Host "Showing ALL services (Ctrl+C to exit)" -ForegroundColor Gray
@@ -15,4 +17,3 @@ if ($Service -eq "") {
     Write-Host "Showing $Service logs (Ctrl+C to exit)" -ForegroundColor Gray
     docker compose logs -f $Service
 }
-
