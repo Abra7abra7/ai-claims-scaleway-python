@@ -1,7 +1,7 @@
 # ==============================================
 # PRODUCTION OVERRIDES
 # ==============================================
-# Use: docker compose -f docker-compose.yml -f docker-compose.prod.yml up
+# Use: docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
 
 services:
   # ==================== FRONTEND ====================
@@ -9,10 +9,12 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile.prod  # Production build (optimized)
+      args:
+        # These are passed to Dockerfile ARG during build
+        - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-https://ai-claims.novis.eu}
+        - NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL:-https://ai-claims.novis.eu}
     environment:
       - NODE_ENV=production
-      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-https://ai-claims.novis.eu}
-      - NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL:-https://ai-claims.novis.eu}
       - DATABASE_URL=${DATABASE_URL}
       - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET}
       - BETTER_AUTH_URL=${BETTER_AUTH_URL:-https://ai-claims.novis.eu}
@@ -72,4 +74,3 @@ services:
         limits:
           cpus: '0.5'
           memory: 512M
-
