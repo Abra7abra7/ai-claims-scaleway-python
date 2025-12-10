@@ -1,0 +1,43 @@
+# ==============================================
+# LOCAL DEVELOPMENT OVERRIDES
+# ==============================================
+# Use: docker compose -f docker-compose.yml -f docker-compose.local.yml up
+
+services:
+  # ==================== FRONTEND ====================
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev  # Development build with hot reload
+    environment:
+      - NODE_ENV=development
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+      - NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
+      - DATABASE_URL=${DATABASE_URL}
+      - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET}
+      - BETTER_AUTH_URL=${BETTER_AUTH_URL:-http://localhost:3000}
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.next
+    command: npm run dev
+
+  # ==================== BACKEND ====================
+  backend:
+    environment:
+      - ENVIRONMENT=development
+    volumes:
+      - ./app:/app/app  # Hot reload for backend
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  # ==================== WORKER ====================
+  worker:
+    volumes:
+      - ./app:/app/app  # Hot reload for worker
+
+  # ==================== MINIO ====================
+  minio:
+    ports:
+      - "9000:9000"
+      - "9001:9001"  # Console
+

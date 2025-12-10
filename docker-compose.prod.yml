@@ -1,15 +1,43 @@
+# ==============================================
+# PRODUCTION OVERRIDES
+# ==============================================
+# Use: docker compose -f docker-compose.yml -f docker-compose.prod.yml up
+
 services:
-  backend:
-    restart: always
+  # ==================== FRONTEND ====================
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.prod  # Production build (optimized)
     environment:
-      - ENVIRONMENT=production
-      - FRONTEND_URL=https://ai-claims.novis.eu
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-https://ai-claims.novis.eu}
+      - NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL:-https://ai-claims.novis.eu}
+      - DATABASE_URL=${DATABASE_URL}
+      - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET}
+      - BETTER_AUTH_URL=${BETTER_AUTH_URL:-https://ai-claims.novis.eu}
+    restart: always
+    command: npm run start  # Production server
     deploy:
       resources:
         limits:
           cpus: '1.0'
           memory: 1G
 
+  # ==================== BACKEND ====================
+  backend:
+    restart: always
+    environment:
+      - ENVIRONMENT=production
+      - FRONTEND_URL=${FRONTEND_URL:-https://ai-claims.novis.eu}
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 4
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2G
+
+  # ==================== WORKER ====================
   worker:
     restart: always
     deploy:
@@ -18,17 +46,7 @@ services:
           cpus: '1.0'
           memory: 1G
 
-  frontend:
-    restart: always
-    environment:
-      # Override API URL for production
-      - NEXT_PUBLIC_API_URL=https://ai-claims.novis.eu
-    deploy:
-      resources:
-        limits:
-          cpus: '0.5'
-          memory: 512M
-
+  # ==================== REDIS ====================
   redis:
     restart: always
     deploy:
@@ -37,6 +55,7 @@ services:
           cpus: '0.25'
           memory: 256M
 
+  # ==================== PRESIDIO ====================
   presidio:
     restart: always
     deploy:
@@ -45,4 +64,12 @@ services:
           cpus: '0.5'
           memory: 512M
 
+  # ==================== MINIO ====================
+  minio:
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
 

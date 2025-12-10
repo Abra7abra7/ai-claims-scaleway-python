@@ -38,10 +38,16 @@ yarn-error.log*
 .next/
 out/
 
-# Environment
+# Environment files (NEVER commit real credentials!)
 .env
 .env.local
+.env.production
 .env.*.local
+.env.*.production
+*.env.backup
+
+# Keep example file for reference
+!.env.example
 
 # IDEs
 .vscode/
@@ -64,3 +70,28 @@ logs/
 # Backups
 *.sql
 *.dump
+backup_*.sql
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Test coverage
+.coverage
+htmlcov/
+.pytest_cache/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Celery
+celerybeat-schedule
+celerybeat.pid
+
+# pgvector
+*.pgvector
+
+# Database
+*.db
+*.sqlite3
