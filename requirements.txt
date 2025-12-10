@@ -13,6 +13,7 @@ presidio-analyzer
 presidio-anonymizer
 python-dotenv
 pydantic-settings
+email-validator>=2.0.0
 PyYAML==6.0.1
 reportlab==4.0.7
 pdfplumber==0.10.3
