@@ -10,7 +10,6 @@
     "generate-types": "npx openapi-typescript http://localhost:8000/api/v1/openapi.json -o src/lib/api-types.ts",
     "generate-types:docker": "npx openapi-typescript http://backend:8000/api/v1/openapi.json -o src/lib/api-types.ts",
     "predev": "npm run generate-types 2>/dev/null || echo 'Type generation skipped (backend not running)'",
-    "prebuild": "npm run generate-types || npm run generate-types:docker || true",
     "types:watch": "nodemon --watch ../app --ext py --exec \"npm run generate-types || true\""
   },
   "dependencies": {
